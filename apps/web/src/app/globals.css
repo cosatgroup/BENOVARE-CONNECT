@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf9f5;
+  --foreground: #26382f;
+
+  /* Identité Benovare — vert institutionnel / orange produit Connect */
+  --color-vert-benovare: #0e6b46;
+  --color-orange-connect: #cc5500;
+  --color-orange-accent: #ff9e4d;
+  --color-orange-fonce: #a84600;
+
+  --color-neutre-900: #26382f;
+  --color-neutre-600: #55655c;
+  --color-neutre-200: #e1e8e3;
+  --color-neutre-100: #eef2ef;
+  --color-neutre-50: #f3f6f4;
+  --color-surface: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-montserrat);
+
+  --color-vert-benovare: var(--color-vert-benovare);
+  --color-orange-connect: var(--color-orange-connect);
+  --color-orange-accent: var(--color-orange-accent);
+  --color-orange-fonce: var(--color-orange-fonce);
+  --color-neutre-900: var(--color-neutre-900);
+  --color-neutre-600: var(--color-neutre-600);
+  --color-neutre-200: var(--color-neutre-200);
+  --color-neutre-100: var(--color-neutre-100);
+  --color-neutre-50: var(--color-neutre-50);
+  --color-surface: var(--color-surface);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-montserrat), Arial, Helvetica, sans-serif;
+}

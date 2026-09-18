@@ -1,0 +1,43 @@
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers: { "Content-Type": "application/json", ...init?.headers },
+  });
+
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const message = data?.error ?? "Une erreur est survenue";
+    throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+  }
+  return data as T;
+}
+
+export interface RegisterInput {
+  email: string;
+  password: string;
+  role: "TALENT" | "PRESTATAIRE" | "PARTENAIRE";
+  phone?: string;
+}
+
+export function registerAccount(input: RegisterInput) {
+  return request<{ message: string; pendingMfaToken: string }>("/api/auth/register", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function login(email: string, password: string) {
+  return request<{ message: string; pendingMfaToken: string }>("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ email, password }),
+  });
+}
+
+export function verifyMfa(pendingMfaToken: string, code: string) {
+  return request<{ token: string; role: string; status: string }>("/api/auth/verify-mfa", {
+    method: "POST",
+    body: JSON.stringify({ pendingMfaToken, code }),
+  });
+}

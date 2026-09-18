@@ -1,0 +1,584 @@
+// Benovare Connect — schéma de données
+// Couvre les fondations transverses aux 5 consoles : comptes, abonnements,
+// besoins/candidatures, missions, évaluations, confiance, documents.
+// Chaque console ajoutera ses modèles spécifiques par-dessus ce socle.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Comptes & rôles
+// ---------------------------------------------------------------------------
+
+enum Role {
+  TALENT
+  PRESTATAIRE
+  PARTENAIRE
+  GESTIONNAIRE
+  ADMINISTRATEUR
+}
+
+enum AccountStatus {
+  ACTIF
+  SUSPENDU
+  EN_ATTENTE_VALIDATION
+}
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  phone         String?
+  passwordHash  String
+  role          Role
+  status        AccountStatus @default(EN_ATTENTE_VALIDATION)
+  mfaEnabled    Boolean       @default(false)
+  mfaSecret     String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  talentProfile       TalentProfile?
+  partenaireMember     PartenaireMember?
+  prestataireMember    PrestataireMember?
+  gestionnaireProfile  GestionnaireProfile?
+  adminProfile         AdminProfile?
+
+  notifications Notification[]
+  messages      Message[]
+  documents     Document[]
+  loginEvents   LoginEvent[]
+  auditLogs     AuditLog[]
+  otpCodes      OtpCode[]
+}
+
+enum OtpChannel {
+  SMS
+  EMAIL
+  APP
+}
+
+model OtpCode {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  codeHash  String
+  channel   OtpChannel
+  expiresAt DateTime
+  consumedAt DateTime?
+  createdAt DateTime   @default(now())
+}
+
+model LoginEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Abonnements — paliers étoiles pour Talents/Prestataires, formules service
+// pour Partenaires
+// ---------------------------------------------------------------------------
+
+enum PalierEtoiles {
+  SILVER   // 1-2 étoiles
+  GOLD     // 1-3 étoiles
+  PLATINUM // 1-4 étoiles
+}
+
+enum FormulePartenaire {
+  ESSENTIEL
+  BUSINESS
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIREE
+  ANNULEE
+}
+
+model Subscription {
+  id                 String              @id @default(cuid())
+  status             SubscriptionStatus  @default(ACTIVE)
+  palierEtoiles      PalierEtoiles?
+  formulePartenaire  FormulePartenaire?
+  renouvellementAuto Boolean             @default(true)
+  prochainRenouvellement DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  talentProfile      TalentProfile?
+  prestataireCompany PrestataireCompany?
+  partenaireCompany  PartenaireCompany?
+}
+
+// ---------------------------------------------------------------------------
+// Console Talents
+// ---------------------------------------------------------------------------
+
+enum Disponibilite {
+  IMMEDIATE
+  A_PARTIR_DE
+}
+
+enum Modalite {
+  TEMPS_PLEIN
+  TEMPS_PARTIEL
+}
+
+model TalentProfile {
+  id               String          @id @default(cuid())
+  userId           String          @unique
+  user             User            @relation(fields: [userId], references: [id])
+  nom              String
+  prenoms          String
+  linkedin         String?
+  adresse          String?
+  verifie          Boolean         @default(false)
+  badgeMerite      Boolean         @default(false)
+  profilUnicorn    Boolean         @default(false)
+  disponibilite    Disponibilite   @default(IMMEDIATE)
+  disponibleLe     DateTime?
+  modalite         Modalite        @default(TEMPS_PLEIN)
+  trustScore       Int             @default(0)
+
+  subscriptionId   String?         @unique
+  subscription     Subscription?   @relation(fields: [subscriptionId], references: [id])
+
+  competences      Competence[]
+  domainesExpertise DomaineExpertise[]
+  candidatures     Candidature[]
+  evaluationsRecues Evaluation[]   @relation("EvaluationTalent")
+  trustScoreHistory TrustScoreEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Competence {
+  id        String        @id @default(cuid())
+  nom       String
+  preuveUrl String?
+  talentId  String
+  talent    TalentProfile @relation(fields: [talentId], references: [id])
+}
+
+model DomaineExpertise {
+  id       String          @id @default(cuid())
+  nom      String          @unique
+  talents  TalentProfile[]
+}
+
+// ---------------------------------------------------------------------------
+// Console Prestataires (personnes morales, multi-utilisateurs)
+// ---------------------------------------------------------------------------
+
+enum RolePrestataire {
+  REPRESENTANT_LEGAL
+  GESTIONNAIRE_MISSIONS
+  CONSULTANT_TECHNIQUE
+  COMPTABILITE
+}
+
+model PrestataireCompany {
+  id              String          @id @default(cuid())
+  raisonSociale   String
+  secteurActivite String?
+  effectif        Int?
+  anneeCreation   Int?
+  coordonnees     String?
+  verifieKYB      Boolean         @default(false)
+  badgeMerite     Boolean         @default(false)
+  profilUnicorn   Boolean         @default(false)
+  trustScore      Int             @default(0)
+
+  subscriptionId  String?         @unique
+  subscription    Subscription?   @relation(fields: [subscriptionId], references: [id])
+
+  membres         PrestataireMember[]
+  candidatures    Candidature[]
+  documents       Document[]
+  evaluationsRecues Evaluation[]  @relation("EvaluationPrestataire")
+  trustScoreHistory TrustScoreEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PrestataireMember {
+  id        String              @id @default(cuid())
+  userId    String              @unique
+  user      User                @relation(fields: [userId], references: [id])
+  companyId String
+  company   PrestataireCompany  @relation(fields: [companyId], references: [id])
+  nom       String
+  role      RolePrestataire
+  createdAt DateTime            @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Console Partenaires (entreprises clientes, multi-utilisateurs)
+// ---------------------------------------------------------------------------
+
+enum RolePartenaire {
+  DIRECTION
+  RESPONSABLE_ACHATS_PROJETS
+  CONTACT_TECHNIQUE
+}
+
+model PartenaireCompany {
+  id              String            @id @default(cuid())
+  raisonSociale   String
+  secteurActivite String?
+  coordonnees     String?
+  verifieKYB      Boolean           @default(false)
+  gestionnaireCompteId String?
+  gestionnaireCompte   GestionnaireProfile? @relation(fields: [gestionnaireCompteId], references: [id])
+
+  subscriptionId  String?           @unique
+  subscription    Subscription?     @relation(fields: [subscriptionId], references: [id])
+
+  membres         PartenaireMember[]
+  besoins         Besoin[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PartenaireMember {
+  id        String            @id @default(cuid())
+  userId    String            @unique
+  user      User              @relation(fields: [userId], references: [id])
+  companyId String
+  company   PartenaireCompany @relation(fields: [companyId], references: [id])
+  nom       String
+  role      RolePartenaire
+  createdAt DateTime          @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Console Gestionnaire de compte
+// ---------------------------------------------------------------------------
+
+model GestionnaireProfile {
+  id        String    @id @default(cuid())
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id])
+  nom       String
+
+  portefeuillePartenaires PartenaireCompany[]
+  entretiensMenes         Entretien[]
+
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Console Administrateur
+// ---------------------------------------------------------------------------
+
+enum RoleInterne {
+  ADMINISTRATEUR
+  SUPPORT
+}
+
+model AdminProfile {
+  id        String      @id @default(cuid())
+  userId    String      @unique
+  user      User        @relation(fields: [userId], references: [id])
+  nom       String
+  roleInterne RoleInterne @default(ADMINISTRATEUR)
+  createdAt DateTime    @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Besoins publiés par les Partenaires
+// ---------------------------------------------------------------------------
+
+enum TypeBesoin {
+  RECRUTEMENT_TALENT
+  RECRUTEMENT_PRESTATAIRE
+  CONSEIL_AUDIT
+}
+
+enum NiveauAccompagnement {
+  MISE_EN_RELATION_SIMPLE
+  COORDINATION_ENTRETIENS
+  ACCOMPAGNEMENT_COMPLET
+}
+
+enum StatutBesoin {
+  OUVERT
+  EN_EVALUATION
+  CLOS
+}
+
+model Besoin {
+  id                  String                @id @default(cuid())
+  type                TypeBesoin
+  titre               String
+  description         String
+  niveauEtoiles        Int                   // 1 à 4
+  categorieTechnique   String?
+  budgetIndicatif      String?
+  delaiSouhaite        String?
+  niveauAccompagnement NiveauAccompagnement  @default(MISE_EN_RELATION_SIMPLE)
+  statut               StatutBesoin          @default(OUVERT)
+
+  partenaireCompanyId  String
+  partenaireCompany    PartenaireCompany     @relation(fields: [partenaireCompanyId], references: [id])
+
+  // Pour un besoin de recherche de talents publié par un Prestataire déjà
+  // engagé sur un projet (complète son équipe) — cf. §3.5 / §4.5 des specs.
+  prestataireCompanyId String?
+
+  criteresSoumission   String[]              // documents admin, offre financière, etc.
+  candidatures         Candidature[]
+  mission              Mission?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Candidatures & sélection en deux temps
+// ---------------------------------------------------------------------------
+
+enum StatutCandidature {
+  SOUMISE
+  PRESELECTIONNEE
+  ENTRETIEN_PLANIFIE
+  ENTRETIEN_FINAL
+  ACCEPTEE
+  REFUSEE
+}
+
+model Candidature {
+  id        String            @id @default(cuid())
+  besoinId  String
+  besoin    Besoin            @relation(fields: [besoinId], references: [id])
+  statut    StatutCandidature @default(SOUMISE)
+
+  talentId  String?
+  talent    TalentProfile?      @relation(fields: [talentId], references: [id])
+  prestataireCompanyId String?
+  prestataireCompany   PrestataireCompany? @relation(fields: [prestataireCompanyId], references: [id])
+  equipeProposee String[]       // ids de PrestataireMember pour une soumission Prestataire
+
+  entretiens Entretien[]
+  messageMotive String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum TypeEntretien {
+  PREMIER_ENTRETIEN_BENOVARE
+  ENTRETIEN_FINAL_PARTENAIRE
+}
+
+enum ResultatEntretien {
+  EN_ATTENTE
+  FAVORABLE
+  DEFAVORABLE
+}
+
+model Entretien {
+  id              String            @id @default(cuid())
+  candidatureId   String
+  candidature     Candidature       @relation(fields: [candidatureId], references: [id])
+  type            TypeEntretien
+  planifieLe      DateTime?
+  gestionnaireId  String?
+  gestionnaire    GestionnaireProfile? @relation(fields: [gestionnaireId], references: [id])
+  representantEntrepriseInvite Boolean @default(false)
+  resultat        ResultatEntretien @default(EN_ATTENTE)
+  compteRendu     String?
+
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Missions — pilotage, jalons, livrables, avenants
+// ---------------------------------------------------------------------------
+
+enum StatutMission {
+  EN_COURS
+  CLOTUREE_CONFORME
+  CLOTUREE_AVEC_RESERVE
+  CLOTUREE_LITIGE
+}
+
+model Mission {
+  id         String        @id @default(cuid())
+  besoinId   String        @unique
+  besoin     Besoin        @relation(fields: [besoinId], references: [id])
+  statut     StatutMission @default(EN_COURS)
+  dateDebut  DateTime      @default(now())
+  echeance   DateTime?
+
+  jalons        Jalon[]
+  livrables     Livrable[]
+  messages      Message[]
+  demandes      DemandeAvenant[]
+  evaluations   Evaluation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum StatutJalon {
+  A_VENIR
+  EN_COURS
+  TERMINE
+}
+
+model Jalon {
+  id        String      @id @default(cuid())
+  missionId String
+  mission   Mission     @relation(fields: [missionId], references: [id])
+  nom       String
+  ordre     Int
+  statut    StatutJalon @default(A_VENIR)
+  echeance  DateTime?
+  termineLe DateTime?
+}
+
+model Livrable {
+  id         String   @id @default(cuid())
+  missionId  String
+  mission    Mission  @relation(fields: [missionId], references: [id])
+  nom        String
+  documentId String?
+  document   Document? @relation(fields: [documentId], references: [id])
+  deposeLe   DateTime @default(now())
+  valide     Boolean  @default(false)
+}
+
+enum TypeDemande {
+  DELAI
+  AVENANT
+}
+
+enum StatutDemande {
+  EN_ATTENTE
+  VALIDEE
+  REFUSEE
+}
+
+model DemandeAvenant {
+  id                 String        @id @default(cuid())
+  missionId          String
+  mission            Mission       @relation(fields: [missionId], references: [id])
+  type               TypeDemande
+  motif              String
+  dureeJours         Int?
+  declarationAnticipee Boolean     @default(true)
+  complexite         String?
+  statut             StatutDemande @default(EN_ATTENTE)
+  recommandationGestionnaire String?
+  createdAt          DateTime      @default(now())
+  traiteLe           DateTime?
+}
+
+// ---------------------------------------------------------------------------
+// Évaluations bidirectionnelles & Trust Score
+// ---------------------------------------------------------------------------
+
+model Evaluation {
+  id          String   @id @default(cuid())
+  missionId   String
+  mission     Mission  @relation(fields: [missionId], references: [id])
+
+  talentId    String?
+  talent      TalentProfile?      @relation("EvaluationTalent", fields: [talentId], references: [id])
+  prestataireCompanyId String?
+  prestataireCompany   PrestataireCompany? @relation("EvaluationPrestataire", fields: [prestataireCompanyId], references: [id])
+
+  note        Int      // 1 à 4 étoiles, alignée sur le système transversal
+  commentaire String?
+  createdAt   DateTime @default(now())
+}
+
+model TrustScoreEntry {
+  id        String   @id @default(cuid())
+  talentId  String?
+  talent    TalentProfile? @relation(fields: [talentId], references: [id])
+  prestataireCompanyId String?
+  prestataireCompany   PrestataireCompany? @relation(fields: [prestataireCompanyId], references: [id])
+  delta     Int
+  raison    String
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Fonctionnalités transversales : messagerie, coffre-fort, notifications, audit
+// ---------------------------------------------------------------------------
+
+model Message {
+  id         String   @id @default(cuid())
+  missionId  String
+  mission    Mission  @relation(fields: [missionId], references: [id])
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+  contenu    String
+  createdAt  DateTime @default(now())
+}
+
+enum TypeDocument {
+  PIECE_IDENTITE
+  REGISTRE_COMMERCE
+  ATTESTATION_FISCALE
+  ATTESTATION_ASSURANCE
+  CONTRAT
+  LIVRABLE
+  AUTRE
+}
+
+model Document {
+  id                  String        @id @default(cuid())
+  nom                 String
+  type                TypeDocument
+  url                 String
+  ownerUserId         String?
+  ownerUser           User?         @relation(fields: [ownerUserId], references: [id])
+  prestataireCompanyId String?
+  prestataireCompany   PrestataireCompany? @relation(fields: [prestataireCompanyId], references: [id])
+  createdAt           DateTime      @default(now())
+
+  livrables Livrable[]
+}
+
+enum CategorieNotification {
+  OPPORTUNITE
+  ECHEANCE_CONTRACTUELLE
+  MESSAGE
+  ALERTE_SYSTEME
+}
+
+model Notification {
+  id         String                @id @default(cuid())
+  userId     String
+  user       User                  @relation(fields: [userId], references: [id])
+  categorie  CategorieNotification
+  titre      String
+  contenu    String
+  lu         Boolean               @default(false)
+  createdAt  DateTime              @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String
+  cible      String?
+  createdAt  DateTime @default(now())
+}

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 82" width="720" height="328" role="img" aria-label="Benovare Connect">
+<defs><style>@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&amp;display=swap');.wm{font-family:'Montserrat',sans-serif;font-weight:600}.tag{font-family:'Montserrat',sans-serif;font-weight:600}</style></defs>
+  <g transform="translate(57.75,-9)"><rect x="6" y="9" width="9" height="46" rx="4.5" fill="#0E6B46"/><path d="M22 14 L37 32 L22 50" fill="none" stroke="#0E6B46" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/><path d="M39 14 L54 32 L39 50" fill="none" stroke="#CC5500" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <text class="wm" x="90" y="80" font-size="26" fill="#0E6B46" text-anchor="middle" textLength="152" lengthAdjust="spacing">CONNECT</text>
+</svg>
