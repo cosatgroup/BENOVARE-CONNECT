@@ -1,3 +1,5 @@
+import { getAuthToken } from "./auth-client";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -12,6 +14,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(typeof message === "string" ? message : JSON.stringify(message));
   }
   return data as T;
+}
+
+// Requête authentifiée — ajoute le jeton MFA-vérifié émis à la connexion.
+// Utilisée par toutes les consoles une fois l'utilisateur connecté.
+export async function authRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getAuthToken();
+  return request<T>(path, {
+    ...init,
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...init?.headers },
+  });
 }
 
 export interface RegisterInput {
@@ -52,4 +64,16 @@ export function verifyMfa(pendingMfaToken: string, code: string) {
     method: "POST",
     body: JSON.stringify({ pendingMfaToken, code }),
   });
+}
+
+export interface Me {
+  id: string;
+  email: string;
+  role: "TALENT" | "PRESTATAIRE" | "PARTENAIRE" | "GESTIONNAIRE" | "ADMINISTRATEUR";
+  status: "ACTIF" | "SUSPENDU" | "EN_ATTENTE_VALIDATION";
+  mfaEnabled: boolean;
+}
+
+export function getMe() {
+  return authRequest<Me>("/api/me");
 }
