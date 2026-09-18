@@ -17,8 +17,8 @@ export default function ConnexionPage() {
     setError(null);
     setLoading(true);
     try {
-      const { pendingMfaToken } = await login(email, password);
-      sessionStorage.setItem("pendingMfaToken", pendingMfaToken);
+      const challenge = await login(email, password);
+      sessionStorage.setItem("mfaChallenge", JSON.stringify(challenge));
       router.push("/verification");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { MfaChallenge } from "@/lib/api";
 import { verifyMfa } from "@/lib/api";
 import { consoles, type Role } from "@/lib/consoles";
 
@@ -10,26 +11,27 @@ export default function VerificationPage() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [pendingMfaToken, setPendingMfaToken] = useState<string | null>(null);
+  const [challenge] = useState<MfaChallenge | null>(() => {
+    if (typeof window === "undefined") return null;
+    const raw = sessionStorage.getItem("mfaChallenge");
+    return raw ? JSON.parse(raw) : null;
+  });
 
   useEffect(() => {
-    const token = sessionStorage.getItem("pendingMfaToken");
-    if (!token) {
+    if (!challenge) {
       router.replace("/connexion");
-      return;
     }
-    setPendingMfaToken(token);
-  }, [router]);
+  }, [challenge, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!pendingMfaToken) return;
+    if (!challenge) return;
     setError(null);
     setLoading(true);
     try {
-      const { token, role } = await verifyMfa(pendingMfaToken, code);
+      const { token, role } = await verifyMfa(challenge.pendingMfaToken, code);
       localStorage.setItem("authToken", token);
-      sessionStorage.removeItem("pendingMfaToken");
+      sessionStorage.removeItem("mfaChallenge");
       const destination = consoles[role as Role]?.basePath ?? "/connexion";
       router.push(destination);
     } catch (err) {
@@ -39,13 +41,39 @@ export default function VerificationPage() {
     }
   }
 
+  if (!challenge) return null;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <h1 className="text-lg font-semibold text-neutre-900">Vérification en deux étapes</h1>
-      <p className="text-sm text-neutre-600">
-        Saisissez le code à 6 chiffres envoyé par e-mail, SMS ou votre application
-        d&apos;authentification.
-      </p>
+
+      {challenge.needsSetup ? (
+        <div className="space-y-3">
+          <p className="text-sm text-neutre-600">
+            Scannez ce QR code avec votre application d&apos;authentification (Google
+            Authenticator, Authy, 1Password…), puis saisissez le code à 6 chiffres qu&apos;elle
+            affiche.
+          </p>
+          {challenge.qrCodeDataUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={challenge.qrCodeDataUrl}
+              alt="QR code de configuration MFA"
+              className="mx-auto h-40 w-40"
+            />
+          )}
+          {challenge.manualKey && (
+            <p className="text-center text-xs text-neutre-600">
+              Ou saisissez cette clé manuellement :{" "}
+              <span className="font-mono tracking-wider">{challenge.manualKey}</span>
+            </p>
+          )}
+        </div>
+      ) : (
+        <p className="text-sm text-neutre-600">
+          Saisissez le code à 6 chiffres affiché par votre application d&apos;authentification.
+        </p>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-neutre-900">Code de vérification</label>

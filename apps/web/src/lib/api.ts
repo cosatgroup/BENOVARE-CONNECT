@@ -21,15 +21,27 @@ export interface RegisterInput {
   phone?: string;
 }
 
+// L'inscription et la connexion (tant que la MFA n'a jamais été finalisée)
+// renvoient les informations d'enrôlement TOTP à scanner avec une
+// application d'authentification (Google Authenticator, Authy, etc.).
+export interface MfaChallenge {
+  message: string;
+  pendingMfaToken: string;
+  needsSetup: boolean;
+  otpauthUrl?: string;
+  qrCodeDataUrl?: string;
+  manualKey?: string;
+}
+
 export function registerAccount(input: RegisterInput) {
-  return request<{ message: string; pendingMfaToken: string }>("/api/auth/register", {
+  return request<MfaChallenge>("/api/auth/register", {
     method: "POST",
     body: JSON.stringify(input),
   });
 }
 
 export function login(email: string, password: string) {
-  return request<{ message: string; pendingMfaToken: string }>("/api/auth/login", {
+  return request<MfaChallenge>("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });

@@ -24,8 +24,8 @@ export default function InscriptionPage() {
     setError(null);
     setLoading(true);
     try {
-      const { pendingMfaToken } = await registerAccount({ email, password, role });
-      sessionStorage.setItem("pendingMfaToken", pendingMfaToken);
+      const challenge = await registerAccount({ email, password, role });
+      sessionStorage.setItem("mfaChallenge", JSON.stringify(challenge));
       router.push("/verification");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Une erreur est survenue");
