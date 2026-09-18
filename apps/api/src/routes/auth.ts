@@ -34,7 +34,7 @@ authRouter.post("/register", async (req, res) => {
     data: { email, phone, passwordHash, role },
   });
 
-  await issueOtp(user.id, "EMAIL");
+  await issueOtp(user.id, user.email, "EMAIL");
 
   return res.status(201).json({
     message: "Compte créé. Un code de vérification a été envoyé.",
@@ -68,7 +68,7 @@ authRouter.post("/login", async (req, res) => {
     return res.status(403).json({ error: "Compte suspendu" });
   }
 
-  await issueOtp(user.id, "EMAIL");
+  await issueOtp(user.id, user.email, "EMAIL");
 
   return res.json({
     message: "Code de vérification envoyé.",

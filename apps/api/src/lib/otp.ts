@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
+import { sendOtpEmail } from "./email";
 import type { OtpChannel } from "@prisma/client";
 
 const OTP_TTL_MINUTES = 10;
@@ -8,9 +9,10 @@ function generateSixDigitCode(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-// Émission d'un OTP. L'envoi effectif (SMS/e-mail) est délégué à un
-// fournisseur à brancher plus tard — ici on journalise pour le développement.
-export async function issueOtp(userId: string, channel: OtpChannel): Promise<string> {
+// Émission d'un OTP. Seul le canal EMAIL est branché à un fournisseur réel
+// (Resend) pour l'instant — SMS et application d'authentification restent à
+// implémenter (§2 des spécifications).
+export async function issueOtp(userId: string, email: string, channel: OtpChannel): Promise<void> {
   const code = generateSixDigitCode();
   const codeHash = await bcrypt.hash(code, 10);
   const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
@@ -19,12 +21,12 @@ export async function issueOtp(userId: string, channel: OtpChannel): Promise<str
     data: { userId, codeHash, channel, expiresAt },
   });
 
-  if (process.env.NODE_ENV !== "production") {
+  if (channel === "EMAIL") {
+    await sendOtpEmail(email, code);
+  } else {
     // eslint-disable-next-line no-console
-    console.log(`[OTP:dev] code pour ${userId} via ${channel} : ${code}`);
+    console.log(`[OTP:non-implémenté] canal ${channel} — code pour ${userId} : ${code}`);
   }
-
-  return code;
 }
 
 export async function verifyOtp(userId: string, code: string): Promise<boolean> {
