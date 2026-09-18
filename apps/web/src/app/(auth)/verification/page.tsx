@@ -11,17 +11,24 @@ export default function VerificationPage() {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [challenge] = useState<MfaChallenge | null>(() => {
-    if (typeof window === "undefined") return null;
-    const raw = sessionStorage.getItem("mfaChallenge");
-    return raw ? JSON.parse(raw) : null;
-  });
+  // Part de `null` pour un rendu initial identique serveur/client — lire
+  // sessionStorage doit attendre l'effet, sous peine d'erreur d'hydratation
+  // (le serveur n'a pas de window, donc rendrait un contenu différent).
+  const [challenge, setChallenge] = useState<MfaChallenge | null>(null);
+  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    if (!challenge) {
+    const raw = sessionStorage.getItem("mfaChallenge");
+    const parsed = raw ? (JSON.parse(raw) as MfaChallenge) : null;
+    // Lecture d'un système externe (sessionStorage) au montage — le
+    // setState qui suit n'est pas une boucle de rendu React->React.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setChallenge(parsed);
+    setChecked(true);
+    if (!parsed) {
       router.replace("/connexion");
     }
-  }, [challenge, router]);
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,7 +48,7 @@ export default function VerificationPage() {
     }
   }
 
-  if (!challenge) return null;
+  if (!checked || !challenge) return null;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
