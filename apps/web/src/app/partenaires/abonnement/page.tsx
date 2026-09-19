@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useEntreprise } from "@/components/partenaires/useEntreprise";
 import { OnboardingEntreprise } from "@/components/partenaires/OnboardingEntreprise";
 import { choisirFormule } from "@/lib/partenaires-api";
+import { GestionDevisEtLicence } from "@/components/abonnement/GestionDevisEtLicence";
 
 const FORMULES = [
   {
@@ -83,6 +84,8 @@ export default function AbonnementPage() {
           );
         })}
       </div>
+
+      <GestionDevisEtLicence onActivated={refetch} />
     </div>
   );
 }

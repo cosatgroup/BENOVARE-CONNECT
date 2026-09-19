@@ -22,6 +22,9 @@ import { veilleRouter } from "./routes/veille";
 import { maintenanceRouter } from "./routes/maintenance";
 import { placementsRouter } from "./routes/placements";
 import { notificationsRouter } from "./routes/notifications";
+import { devisRouter } from "./routes/devis";
+import { abonnementRouter } from "./routes/abonnement";
+import { handleFedapayWebhook, handleKkiapayWebhook } from "./routes/webhooks";
 
 const app = express();
 
@@ -45,7 +48,14 @@ app.use(
     credentials: true,
   })
 );
+// La signature FedaPay porte sur le corps brut de la requête : cette route
+// doit donc lire le body en Buffer, avant le express.json() global qui le
+// parserait et rendrait la vérification de signature impossible.
+app.post("/api/webhooks/fedapay", express.raw({ type: "application/json" }), handleFedapayWebhook);
+
 app.use(express.json());
+
+app.post("/api/webhooks/kkiapay", handleKkiapayWebhook);
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
@@ -69,6 +79,8 @@ app.use("/api/veille", veilleRouter);
 app.use("/api/maintenance", maintenanceRouter);
 app.use("/api/placements", placementsRouter);
 app.use("/api/notifications", notificationsRouter);
+app.use("/api/devis", devisRouter);
+app.use("/api/abonnement", abonnementRouter);
 
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 app.listen(port, () => {

@@ -33,3 +33,39 @@ export async function sendOtpEmail(to: string, code: string): Promise<void> {
     throw new Error("Échec de l'envoi du code de vérification");
   }
 }
+
+// §7.4 — Envoyé une fois le paiement d'un devis confirmé (KKiaPay, FedaPay
+// ou virement bancaire validé manuellement) ; le compte saisit ce code
+// dans l'app pour activer sa formule.
+export async function sendLicenceEmail(
+  to: string,
+  code: string,
+  formule: string,
+  montant: number,
+  devise: string
+): Promise<void> {
+  if (!resend) {
+    // eslint-disable-next-line no-console
+    console.log(`[LICENCE:no-provider] code pour ${to} (${formule}, ${montant} ${devise}) : ${code}`);
+    return;
+  }
+
+  const { error } = await resend.emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "Votre code d'activation Benovare Connect",
+    html: `
+      <p>Votre paiement de ${montant.toLocaleString("fr-FR")} ${devise} pour la formule
+      <strong>${formule}</strong> a été confirmé. Voici votre code d'activation :</p>
+      <p style="font-size: 24px; font-weight: 600; letter-spacing: 4px;">${code}</p>
+      <p>Saisissez ce code dans la page Abonnement de votre compte Benovare Connect pour
+      l'activer.</p>
+    `,
+  });
+
+  if (error) {
+    // eslint-disable-next-line no-console
+    console.error("Échec d'envoi de l'e-mail de licence :", error);
+    throw new Error("Échec de l'envoi du code de licence");
+  }
+}

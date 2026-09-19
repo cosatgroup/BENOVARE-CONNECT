@@ -45,3 +45,24 @@ services:
         sync: false
       - key: NODE_ENV
         value: production
+      # Abonnements et tarification (§7.4) — paiement KKiaPay/FedaPay et
+      # virement bancaire. Clés à saisir manuellement une fois les comptes
+      # KKiaPay/FedaPay créés ; tant qu'elles sont absentes, les routes de
+      # paiement correspondantes répondent une erreur "Configuration
+      # manquante" sans planter le service.
+      - key: KKIAPAY_PUBLIC_KEY
+        sync: false
+      - key: KKIAPAY_PRIVATE_KEY
+        sync: false
+      - key: KKIAPAY_SECRET_KEY
+        sync: false
+      - key: KKIAPAY_SANDBOX
+        value: "true"
+      - key: FEDAPAY_SECRET_KEY
+        sync: false
+      - key: FEDAPAY_ENVIRONMENT
+        value: sandbox
+      - key: FEDAPAY_WEBHOOK_SECRET
+        sync: false
+      - key: BANK_TRANSFER_INSTRUCTIONS
+        sync: false

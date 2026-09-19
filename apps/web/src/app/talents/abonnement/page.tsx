@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useProfilTalent } from "@/components/talents/useProfilTalent";
 import { OnboardingTalent } from "@/components/talents/OnboardingTalent";
 import { choisirPalier } from "@/lib/talents-api";
+import { GestionDevisEtLicence } from "@/components/abonnement/GestionDevisEtLicence";
 
 const FORMULES = [
   {
@@ -85,6 +86,8 @@ export default function AbonnementTalentPage() {
           );
         })}
       </div>
+
+      <GestionDevisEtLicence onActivated={refetch} />
     </div>
   );
 }
