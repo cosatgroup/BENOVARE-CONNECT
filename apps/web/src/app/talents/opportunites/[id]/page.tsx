@@ -40,7 +40,8 @@ export default function OpportuniteDetailPage({ params }: { params: Promise<{ id
       <div>
         <h1 className="text-xl font-semibold text-neutre-900">{opportunite.titre}</h1>
         <p className="mt-1 text-sm text-neutre-600">
-          {opportunite.partenaireCompany?.raisonSociale ?? "Prestataire"} · {opportunite.niveauEtoiles} étoile
+          {opportunite.partenaireCompany?.raisonSociale ?? opportunite.entrepriseClienteNom ?? "Prestataire"} ·{" "}
+          {opportunite.niveauEtoiles} étoile
           {opportunite.niveauEtoiles > 1 ? "s" : ""}
           {opportunite.categorieTechnique ? ` · ${opportunite.categorieTechnique}` : ""}
         </p>

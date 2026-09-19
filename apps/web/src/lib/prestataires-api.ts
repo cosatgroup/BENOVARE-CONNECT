@@ -51,6 +51,7 @@ export interface ProjetBesoin {
   criteresSoumission: string[];
   createdAt: string;
   partenaireCompany: { raisonSociale: string } | null;
+  entrepriseClienteNom: string | null;
 }
 
 export function listerProjets() {

@@ -47,7 +47,8 @@ export default function ProjetDetailPage({ params }: { params: Promise<{ id: str
       <div>
         <h1 className="text-xl font-semibold text-neutre-900">{projet.titre}</h1>
         <p className="mt-1 text-sm text-neutre-600">
-          {projet.partenaireCompany?.raisonSociale} · budget indicatif {projet.budgetIndicatif ?? "non précisé"}
+          {projet.partenaireCompany?.raisonSociale ?? projet.entrepriseClienteNom} · budget indicatif{" "}
+          {projet.budgetIndicatif ?? "non précisé"}
         </p>
       </div>
 
