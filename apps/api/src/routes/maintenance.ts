@@ -1,6 +1,8 @@
 import { Router } from "express";
+import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma";
 import { encryptSecret } from "../lib/crypto";
+import { createTotpSecret, buildTotpEnrollment } from "../lib/totp";
 
 export const maintenanceRouter = Router();
 
@@ -106,4 +108,47 @@ maintenanceRouter.post("/activer-abonnement-demo", async (req, res) => {
   }
 
   return res.status(409).json({ error: "Aucun profil/entreprise rattaché à ce compte pour ce rôle" });
+});
+
+// Amorçage ponctuel d'un compte interne (Gestionnaire/Administrateur) sans
+// passer par /api/administrateur/utilisateurs/interne, qui exige déjà un
+// Administrateur authentifié — utile pour le tout premier compte
+// Administrateur d'un environnement, ou pour préparer des comptes de démo.
+// Protégée par le même secret de maintenance.
+maintenanceRouter.post("/creer-compte-interne", async (req, res) => {
+  const providedSecret = req.headers["x-maintenance-secret"];
+  const expectedSecret = process.env.MAINTENANCE_SECRET;
+  if (!expectedSecret || providedSecret !== expectedSecret) {
+    return res.status(401).json({ error: "Secret de maintenance invalide" });
+  }
+
+  const { email, password, role, nom } = req.body as {
+    email?: string;
+    password?: string;
+    role?: "GESTIONNAIRE" | "ADMINISTRATEUR";
+    nom?: string;
+  };
+  if (!email || !password || !nom || (role !== "GESTIONNAIRE" && role !== "ADMINISTRATEUR")) {
+    return res.status(400).json({ error: "email, password, nom et role (GESTIONNAIRE|ADMINISTRATEUR) requis" });
+  }
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    return res.status(409).json({ error: "Un compte existe déjà avec cet e-mail" });
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  const mfaSecret = createTotpSecret();
+  const user = await prisma.user.create({
+    data: { email, passwordHash, role, mfaSecret: encryptSecret(mfaSecret), status: "ACTIF" },
+  });
+
+  if (role === "GESTIONNAIRE") {
+    await prisma.gestionnaireProfile.create({ data: { userId: user.id, nom } });
+  } else {
+    await prisma.adminProfile.create({ data: { userId: user.id, nom } });
+  }
+
+  const enrollment = await buildTotpEnrollment(email, mfaSecret);
+  return res.status(201).json({ id: user.id, email: user.email, role: user.role, ...enrollment });
 });
