@@ -27,6 +27,9 @@ opportunitesRouter.get("/", async (req: AuthenticatedRequest, res) => {
       type: "RECRUTEMENT_TALENT",
       statut: "OUVERT",
       niveauEtoiles: { lte: maxEtoiles },
+      // Les offres de placement Benovare relèvent du menu Carrières, pas du
+      // catalogue Opportunités (§3.6 vs §3.5).
+      publieParBenovare: false,
     },
     include: { partenaireCompany: true },
     orderBy: { createdAt: "desc" },

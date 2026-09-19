@@ -332,12 +332,22 @@ model Besoin {
   niveauAccompagnement NiveauAccompagnement  @default(MISE_EN_RELATION_SIMPLE)
   statut               StatutBesoin          @default(OUVERT)
 
-  partenaireCompanyId  String
-  partenaireCompany    PartenaireCompany     @relation(fields: [partenaireCompanyId], references: [id])
+  // Optionnel uniquement pour une offre de placement Benovare (voir
+  // publieParBenovare ci-dessous) — un besoin publié par un Partenaire reste
+  // toujours rattaché à son entreprise.
+  partenaireCompanyId  String?
+  partenaireCompany    PartenaireCompany?    @relation(fields: [partenaireCompanyId], references: [id])
 
   // Pour un besoin de recherche de talents publié par un Prestataire déjà
   // engagé sur un projet (complète son équipe) — cf. §3.5 / §4.5 des specs.
   prestataireCompanyId String?
+
+  // §3.6/§4.6/§7.7 — Offre de placement confiée directement à Benovare par
+  // une entreprise hors plateforme, publiée et gérée par l'Administrateur
+  // ou le Gestionnaire de compte. Réutilise tout le parcours standard
+  // (candidature, entretiens, mission) ; seule la source diffère.
+  publieParBenovare    Boolean               @default(false)
+  entrepriseClienteNom String?
 
   criteresSoumission   String[]              // documents admin, offre financière, etc.
   candidatures         Candidature[]

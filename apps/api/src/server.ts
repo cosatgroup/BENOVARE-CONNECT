@@ -20,6 +20,7 @@ import { prestataireMissionsRouter } from "./routes/prestataire-missions";
 import { administrateurRouter } from "./routes/administrateur";
 import { veilleRouter } from "./routes/veille";
 import { maintenanceRouter } from "./routes/maintenance";
+import { placementsRouter } from "./routes/placements";
 
 const app = express();
 
@@ -65,6 +66,7 @@ app.use("/api/prestataires/missions", prestataireMissionsRouter);
 app.use("/api/administrateur", administrateurRouter);
 app.use("/api/veille", veilleRouter);
 app.use("/api/maintenance", maintenanceRouter);
+app.use("/api/placements", placementsRouter);
 
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 app.listen(port, () => {

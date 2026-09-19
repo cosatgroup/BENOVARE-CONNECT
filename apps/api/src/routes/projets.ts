@@ -22,7 +22,14 @@ projetsRouter.get("/", async (req: AuthenticatedRequest, res) => {
   }
 
   const besoins = await prisma.besoin.findMany({
-    where: { type: "RECRUTEMENT_PRESTATAIRE", statut: "OUVERT", niveauEtoiles: { lte: maxEtoiles } },
+    where: {
+      type: "RECRUTEMENT_PRESTATAIRE",
+      statut: "OUVERT",
+      niveauEtoiles: { lte: maxEtoiles },
+      // Les appels d'offres de placement Benovare relèvent du menu
+      // Carrières, pas du catalogue Projets (§4.6 vs §4.5).
+      publieParBenovare: false,
+    },
     include: { partenaireCompany: true },
     orderBy: { createdAt: "desc" },
   });
