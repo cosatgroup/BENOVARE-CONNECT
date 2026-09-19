@@ -78,3 +78,15 @@ export function listerComptes() {
 export function validerCompte(type: "partenaire" | "prestataire" | "talent", id: string) {
   return authRequest(`/api/gestionnaire/comptes/${type}/${id}/valider`, { method: "POST" });
 }
+
+export interface Reporting {
+  delaiMoyenSelectionJours: number | null;
+  missionsClotureesConformesPct: number | null;
+  tauxSatisfactionPct: number | null;
+  missionsActives: number;
+  repartitionPortefeuille: { partenaires: number; talents: number; prestataires: number };
+}
+
+export function getReporting() {
+  return authRequest<Reporting>("/api/gestionnaire/reporting");
+}

@@ -229,3 +229,44 @@ gestionnaireRouter.post("/comptes/talent/:id/valider", async (req: Authenticated
   });
   return res.json(profile);
 });
+
+// §6.7 — Reporting du portefeuille. Calculé à partir des données réelles
+// plutôt que de valeurs illustratives : certains indicateurs restent à
+// `null` tant que les flux qui les alimentent (clôture de mission,
+// évaluations bidirectionnelles) ne sont pas construits.
+gestionnaireRouter.get("/reporting", async (_req: AuthenticatedRequest, res) => {
+  const [decisions, missionsCloturees, missionsConformes, evaluations, partenaires, talents, prestataires, missionsActives] =
+    await Promise.all([
+      prisma.candidature.findMany({
+        where: { statut: { in: ["ACCEPTEE", "REFUSEE"] } },
+        select: { createdAt: true, updatedAt: true },
+      }),
+      prisma.mission.count({ where: { statut: { not: "EN_COURS" } } }),
+      prisma.mission.count({ where: { statut: "CLOTUREE_CONFORME" } }),
+      prisma.evaluation.aggregate({ _avg: { note: true }, _count: true }),
+      prisma.partenaireCompany.count(),
+      prisma.talentProfile.count(),
+      prisma.prestataireCompany.count(),
+      prisma.mission.count({ where: { statut: "EN_COURS" } }),
+    ]);
+
+  const delaiMoyenSelectionJours =
+    decisions.length > 0
+      ? decisions.reduce((sum, c) => sum + (c.updatedAt.getTime() - c.createdAt.getTime()), 0) /
+        decisions.length /
+        (1000 * 60 * 60 * 24)
+      : null;
+
+  const missionsClotureesConformesPct =
+    missionsCloturees > 0 ? (missionsConformes / missionsCloturees) * 100 : null;
+
+  const tauxSatisfactionPct = evaluations._count > 0 ? ((evaluations._avg.note ?? 0) / 4) * 100 : null;
+
+  return res.json({
+    delaiMoyenSelectionJours,
+    missionsClotureesConformesPct,
+    tauxSatisfactionPct,
+    missionsActives,
+    repartitionPortefeuille: { partenaires, talents, prestataires },
+  });
+});

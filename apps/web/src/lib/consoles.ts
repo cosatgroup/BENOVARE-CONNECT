@@ -72,7 +72,7 @@ export const consoles: Record<Role, ConsoleConfig> = {
       { label: "Sourcing et sélection", href: "/gestionnaire/sourcing-et-selection" },
       { label: "Pilotage des missions", href: "/gestionnaire/pilotage-des-missions" },
       { label: "Gestion des comptes", href: "/gestionnaire/gestion-des-comptes" },
-      { label: "Reporting" },
+      { label: "Reporting", href: "/gestionnaire/reporting" },
     ],
   },
   ADMINISTRATEUR: {
