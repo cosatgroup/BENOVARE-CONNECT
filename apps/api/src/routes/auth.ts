@@ -10,11 +10,13 @@ export const authRouter = Router();
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(10),
-  // TODO: GESTIONNAIRE/ADMINISTRATEUR sont des rôles internes normalement
-  // provisionnés par l'Administrateur (§7.3) — acceptés ici en inscription
-  // libre à titre provisoire tant que la console Administrateur n'existe
-  // pas, pour permettre de tester la console Gestionnaire de compte.
-  role: z.enum(["TALENT", "PRESTATAIRE", "PARTENAIRE", "GESTIONNAIRE"]),
+  // SÉCURITÉ — À FAIRE AVANT TOUT LANCEMENT RÉEL : GESTIONNAIRE et
+  // ADMINISTRATEUR sont des rôles internes qui ne devraient jamais être
+  // auto-inscriptibles. Ouverts ici uniquement le temps de construire et
+  // tester ces consoles faute de mécanisme de provisioning interne
+  // (invitation par un Administrateur, §7.3). Retirer ces deux valeurs de
+  // l'enum dès qu'un flux d'invitation sécurisé existe.
+  role: z.enum(["TALENT", "PRESTATAIRE", "PARTENAIRE", "GESTIONNAIRE", "ADMINISTRATEUR"]),
   phone: z.string().optional(),
 });
 
@@ -47,6 +49,9 @@ authRouter.post("/register", async (req, res) => {
 
   if (role === "GESTIONNAIRE") {
     await prisma.gestionnaireProfile.create({ data: { userId: user.id, nom: email } });
+  }
+  if (role === "ADMINISTRATEUR") {
+    await prisma.adminProfile.create({ data: { userId: user.id, nom: email } });
   }
 
   const enrollment = await buildTotpEnrollment(email, mfaSecret);

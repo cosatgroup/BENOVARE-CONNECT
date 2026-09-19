@@ -81,9 +81,9 @@ export const consoles: Record<Role, ConsoleConfig> = {
     basePath: "/administrateur",
     nav: [
       { label: "Tableau de bord global", href: "/administrateur" },
-      { label: "Gestion des utilisateurs" },
+      { label: "Gestion des utilisateurs", href: "/administrateur/gestion-des-utilisateurs" },
       { label: "Abonnements et tarification" },
-      { label: "Mérite et Profil Unicorn" },
+      { label: "Mérite et Profil Unicorn", href: "/administrateur/merite-et-profil-unicorn" },
       { label: "Catalogue et taxonomie" },
       { label: "Carrières et veille du marché" },
       { label: "Modération et conformité" },
