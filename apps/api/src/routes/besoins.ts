@@ -51,7 +51,9 @@ besoinsRouter.get("/", requireRole("PARTENAIRE"), async (req: AuthenticatedReque
   }
 
   const besoins = await prisma.besoin.findMany({
-    where: { partenaireCompanyId: company.id },
+    // Exclut les avis de recherche de talents publiés par un Prestataire
+    // sur une mission de ce Partenaire (§4.5) — pas des besoins qu'il gère.
+    where: { partenaireCompanyId: company.id, prestataireCompanyId: null },
     include: { _count: { select: { candidatures: true } } },
     orderBy: { createdAt: "desc" },
   });
