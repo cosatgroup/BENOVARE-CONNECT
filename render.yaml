@@ -13,7 +13,7 @@ services:
     plan: free
     rootDir: apps/api
     buildCommand: npm install --include=dev && npx prisma generate && npm run build
-    startCommand: npx prisma db push --skip-generate --accept-data-loss && npm run start
+    startCommand: npx prisma db push --skip-generate && npm run start
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
