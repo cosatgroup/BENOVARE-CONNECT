@@ -29,12 +29,15 @@ export async function collecterOpportunitesExternes(): Promise<CollecteResult[]>
     try {
       const response = await fetch(source.url, { headers: { "User-Agent": VEILLE_USER_AGENT } });
       const body = await response.text();
-      if (!response.ok || !body.trim().startsWith("<")) {
+
+      let feed;
+      try {
+        feed = await parser.parseString(body);
+      } catch {
         throw new Error(
-          `Réponse inattendue (HTTP ${response.status}, content-type ${response.headers.get("content-type")}) : ${body.slice(0, 200)}`
+          `Flux illisible (HTTP ${response.status}, content-type ${response.headers.get("content-type")}) — extrait : ${body.slice(0, 300).replace(/\s+/g, " ")}`
         );
       }
-      const feed = await parser.parseString(body);
       let nouvelles = 0;
 
       for (const item of feed.items) {
