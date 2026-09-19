@@ -29,10 +29,10 @@ export const consoles: Record<Role, ConsoleConfig> = {
     basePath: "/talents",
     nav: [
       { label: "Tableau de bord", href: "/talents" },
-      { label: "Profil" },
-      { label: "Opportunités" },
+      { label: "Profil", href: "/talents/profil" },
+      { label: "Opportunités", href: "/talents/opportunites" },
       { label: "Carrières" },
-      { label: "Abonnement" },
+      { label: "Abonnement", href: "/talents/abonnement" },
       { label: "Benovare" },
     ],
   },

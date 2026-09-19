@@ -8,6 +8,10 @@ import { partenairesRouter } from "./routes/partenaires";
 import { besoinsRouter } from "./routes/besoins";
 import { candidaturesRouter } from "./routes/candidatures";
 import { missionsRouter } from "./routes/missions";
+import { talentsRouter } from "./routes/talents";
+import { opportunitesRouter } from "./routes/opportunites";
+import { mesCandidaturesRouter } from "./routes/mes-candidatures";
+import { talentMissionsRouter } from "./routes/talent-missions";
 
 const app = express();
 
@@ -41,6 +45,10 @@ app.use("/api/partenaires", partenairesRouter);
 app.use("/api/besoins", besoinsRouter);
 app.use("/api/candidatures", candidaturesRouter);
 app.use("/api/missions", missionsRouter);
+app.use("/api/talents", talentsRouter);
+app.use("/api/opportunites", opportunitesRouter);
+app.use("/api/mes-candidatures", mesCandidaturesRouter);
+app.use("/api/talents/missions", talentMissionsRouter);
 
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 app.listen(port, () => {
