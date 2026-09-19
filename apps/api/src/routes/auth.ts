@@ -10,7 +10,11 @@ export const authRouter = Router();
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(10),
-  role: z.enum(["TALENT", "PRESTATAIRE", "PARTENAIRE"]), // rôles internes créés par l'Administrateur
+  // TODO: GESTIONNAIRE/ADMINISTRATEUR sont des rôles internes normalement
+  // provisionnés par l'Administrateur (§7.3) — acceptés ici en inscription
+  // libre à titre provisoire tant que la console Administrateur n'existe
+  // pas, pour permettre de tester la console Gestionnaire de compte.
+  role: z.enum(["TALENT", "PRESTATAIRE", "PARTENAIRE", "GESTIONNAIRE"]),
   phone: z.string().optional(),
 });
 
@@ -40,6 +44,10 @@ authRouter.post("/register", async (req, res) => {
   const user = await prisma.user.create({
     data: { email, phone, passwordHash, role, mfaSecret },
   });
+
+  if (role === "GESTIONNAIRE") {
+    await prisma.gestionnaireProfile.create({ data: { userId: user.id, nom: email } });
+  }
 
   const enrollment = await buildTotpEnrollment(email, mfaSecret);
 

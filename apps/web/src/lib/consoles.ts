@@ -69,9 +69,9 @@ export const consoles: Record<Role, ConsoleConfig> = {
     basePath: "/gestionnaire",
     nav: [
       { label: "Tableau de bord", href: "/gestionnaire" },
-      { label: "Sourcing et sélection" },
-      { label: "Pilotage des missions" },
-      { label: "Gestion des comptes" },
+      { label: "Sourcing et sélection", href: "/gestionnaire/sourcing-et-selection" },
+      { label: "Pilotage des missions", href: "/gestionnaire/pilotage-des-missions" },
+      { label: "Gestion des comptes", href: "/gestionnaire/gestion-des-comptes" },
       { label: "Reporting" },
     ],
   },

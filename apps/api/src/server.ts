@@ -12,6 +12,7 @@ import { talentsRouter } from "./routes/talents";
 import { opportunitesRouter } from "./routes/opportunites";
 import { mesCandidaturesRouter } from "./routes/mes-candidatures";
 import { talentMissionsRouter } from "./routes/talent-missions";
+import { gestionnaireRouter } from "./routes/gestionnaire";
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use("/api/talents", talentsRouter);
 app.use("/api/opportunites", opportunitesRouter);
 app.use("/api/mes-candidatures", mesCandidaturesRouter);
 app.use("/api/talents/missions", talentMissionsRouter);
+app.use("/api/gestionnaire", gestionnaireRouter);
 
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 app.listen(port, () => {
