@@ -11,10 +11,23 @@ export interface VeilleSource {
 // les accès automatisés (HTTP 406 « Blocked due to bot activity », HDX/ONU)
 // — retiré plutôt que contourné. À reconsidérer seulement via une exception
 // officielle demandée à hdx@un.org.
+// BrighterMonday (Kenya) et Jobberman (Nigeria) : flux découverts via leur
+// propre balise <link rel="alternate" type="application/rss+xml"> sur les
+// pages de listing — usage prévu par le site, pas une URL cachée. Chaque
+// flux ne contient qu'une poignée d'offres récentes ; le volume s'accumule
+// au fil des collectes successives.
 export const VEILLE_SOURCES: VeilleSource[] = [
   {
     nom: "NGO Jobs in Africa",
     url: "https://ngojobsinafrica.com/feed/",
+  },
+  {
+    nom: "BrighterMonday Kenya",
+    url: "https://cde.hexagon.build/feeds/37xbMD?token=ab06a1a3-7aa7-4a8e-978e-4d2001718ef5",
+  },
+  {
+    nom: "Jobberman Nigeria",
+    url: "https://cde.hexagon.build/feeds/3aR1XD?token=ab06a1a3-7aa7-4a8e-978e-4d2001718ef5",
   },
 ];
 
