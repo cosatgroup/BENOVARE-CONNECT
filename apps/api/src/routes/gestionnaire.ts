@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
 import { getGestionnaireProfileForUser } from "../lib/gestionnaire-context";
+import { notifyPartenaireCompany, notifyPrestataireCompany, notifyUser } from "../lib/notifications";
 
 export const gestionnaireRouter = Router();
 
@@ -72,7 +73,12 @@ gestionnaireRouter.post("/candidatures/:id/entretien", async (req: Authenticated
 
   const candidature = await prisma.candidature.findUnique({
     where: { id: String(req.params.id) },
-    include: { entretiens: true },
+    include: {
+      entretiens: true,
+      besoin: true,
+      talent: true,
+      prestataireCompany: true,
+    },
   });
   if (!candidature) {
     return res.status(404).json({ error: "Candidature introuvable" });
@@ -96,6 +102,26 @@ gestionnaireRouter.post("/candidatures/:id/entretien", async (req: Authenticated
 
   const nouveauStatut = parsed.data.resultat === "FAVORABLE" ? "ENTRETIEN_FINAL" : "REFUSEE";
   await prisma.candidature.update({ where: { id: candidature.id }, data: { statut: nouveauStatut } });
+
+  const candidatNom = candidature.talent
+    ? `${candidature.talent.prenoms} ${candidature.talent.nom}`
+    : (candidature.prestataireCompany?.raisonSociale ?? "Le candidat");
+
+  if (parsed.data.resultat === "FAVORABLE" && candidature.besoin.partenaireCompanyId) {
+    await notifyPartenaireCompany(
+      candidature.besoin.partenaireCompanyId,
+      "OPPORTUNITE",
+      "Entretien final à mener",
+      `${candidatNom} a passé avec succès le premier entretien pour « ${candidature.besoin.titre} ». À vous de conduire l'entretien final.`
+    );
+  } else if (parsed.data.resultat === "DEFAVORABLE") {
+    const message = `Votre candidature à « ${candidature.besoin.titre} » n'a pas été retenue à l'issue du premier entretien.`;
+    if (candidature.talent) {
+      await notifyUser(candidature.talent.userId, "OPPORTUNITE", "Candidature non retenue", message);
+    } else if (candidature.prestataireCompanyId) {
+      await notifyPrestataireCompany(candidature.prestataireCompanyId, "OPPORTUNITE", "Candidature non retenue", message);
+    }
+  }
 
   return res.status(201).json(entretien);
 });

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
 import { getPartenaireCompanyForUser } from "../lib/partenaire-context";
+import { notifyPrestataireCompany, notifyUser } from "../lib/notifications";
 
 export const candidaturesRouter = Router();
 
@@ -30,7 +31,7 @@ candidaturesRouter.get("/", async (req: AuthenticatedRequest, res) => {
 async function assertCandidatureBelongsToPartenaire(candidatureId: string, companyId: string) {
   return prisma.candidature.findFirst({
     where: { id: candidatureId, besoin: { partenaireCompanyId: companyId } },
-    include: { besoin: true },
+    include: { besoin: true, talent: true, prestataireCompany: true },
   });
 }
 
@@ -61,6 +62,27 @@ candidaturesRouter.post("/:id/decision", async (req: AuthenticatedRequest, res) 
     where: { id: candidature.id },
     data: { statut: parsed.data.decision, messageMotive: parsed.data.messageMotive },
   });
+
+  const message =
+    parsed.data.decision === "ACCEPTEE"
+      ? `Félicitations, votre candidature à « ${candidature.besoin.titre} » a été acceptée ! Le pilotage de la mission est disponible dans Missions.`
+      : `Votre candidature à « ${candidature.besoin.titre} » n'a pas été retenue à l'issue de l'entretien final.`;
+
+  if (candidature.talent) {
+    await notifyUser(
+      candidature.talent.userId,
+      "OPPORTUNITE",
+      parsed.data.decision === "ACCEPTEE" ? "Candidature acceptée" : "Candidature non retenue",
+      message
+    );
+  } else if (candidature.prestataireCompanyId) {
+    await notifyPrestataireCompany(
+      candidature.prestataireCompanyId,
+      "OPPORTUNITE",
+      parsed.data.decision === "ACCEPTEE" ? "Candidature acceptée" : "Candidature non retenue",
+      message
+    );
+  }
 
   if (parsed.data.decision === "ACCEPTEE") {
     await prisma.mission.upsert({

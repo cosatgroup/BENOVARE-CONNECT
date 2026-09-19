@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
 import { getPrestataireCompanyForUser, maxEtoilesForPalier } from "../lib/prestataire-context";
+import { notifyPartenaireCompany } from "../lib/notifications";
 
 export const projetsRouter = Router();
 
@@ -95,6 +96,15 @@ projetsRouter.post("/:id/soumettre", async (req: AuthenticatedRequest, res) => {
       equipeProposee: parsed.data.equipeProposee,
     },
   });
+
+  if (besoin.partenaireCompanyId) {
+    await notifyPartenaireCompany(
+      besoin.partenaireCompanyId,
+      "OPPORTUNITE",
+      "Nouvelle soumission reçue",
+      `${company.raisonSociale} a soumissionné à « ${besoin.titre} ».`
+    );
+  }
 
   return res.status(201).json(candidature);
 });

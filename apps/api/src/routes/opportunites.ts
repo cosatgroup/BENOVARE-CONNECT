@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
 import { getTalentProfileForUser, maxEtoilesForPalier } from "../lib/talent-context";
+import { notifyPartenaireCompany } from "../lib/notifications";
 
 export const opportunitesRouter = Router();
 
@@ -94,6 +95,15 @@ opportunitesRouter.post("/:id/candidater", async (req: AuthenticatedRequest, res
   const candidature = await prisma.candidature.create({
     data: { besoinId: besoin.id, talentId: profile.id, messageMotive: parsed.data.messageMotive },
   });
+
+  if (besoin.partenaireCompanyId) {
+    await notifyPartenaireCompany(
+      besoin.partenaireCompanyId,
+      "OPPORTUNITE",
+      "Nouvelle candidature reçue",
+      `${profile.prenoms} ${profile.nom} a candidaté à « ${besoin.titre} ».`
+    );
+  }
 
   return res.status(201).json(candidature);
 });

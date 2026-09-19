@@ -4,6 +4,7 @@ import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
 import { getTalentProfileForUser } from "../lib/talent-context";
 import { getPrestataireCompanyForUser } from "../lib/prestataire-context";
+import { notifyPartenaireCompany } from "../lib/notifications";
 
 export const placementsRouter = Router();
 
@@ -76,6 +77,16 @@ placementsRouter.post(
         publieParBenovare: true,
       },
     });
+
+    if (partenaireCompanyId) {
+      await notifyPartenaireCompany(
+        partenaireCompanyId,
+        "OPPORTUNITE",
+        "Offre de placement publiée en votre nom",
+        `Benovare a publié « ${placement.titre} » pour votre compte. Suivez son avancement dans Candidatures puis Missions.`
+      );
+    }
+
     return res.status(201).json(placement);
   }
 );
