@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
+import { requireAccesActif } from "../middleware/access";
 import { getTalentProfileForUser } from "../lib/talent-context";
 
 export const mesCandidaturesRouter = Router();
 
-mesCandidaturesRouter.use(requireAuth, requireRole("TALENT"));
+mesCandidaturesRouter.use(requireAuth, requireRole("TALENT"), requireAccesActif);
 
 // §3.5 Suivi — statut de candidature en temps réel, avec bascule
 // automatique vers le pilotage en cas d'acceptation (le besoin porte alors

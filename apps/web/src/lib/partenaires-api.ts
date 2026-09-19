@@ -27,13 +27,6 @@ export function creerEntreprise(input: OnboardingInput) {
   });
 }
 
-export function choisirFormule(formulePartenaire: "ESSENTIEL" | "BUSINESS" | "ENTERPRISE") {
-  return authRequest("/api/partenaires/subscription", {
-    method: "POST",
-    body: JSON.stringify({ formulePartenaire }),
-  });
-}
-
 export type TypeBesoin = "RECRUTEMENT_TALENT" | "RECRUTEMENT_PRESTATAIRE" | "CONSEIL_AUDIT";
 export type NiveauAccompagnement =
   | "MISE_EN_RELATION_SIMPLE"

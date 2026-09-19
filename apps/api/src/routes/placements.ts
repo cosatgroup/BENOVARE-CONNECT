@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
+import { requireAccesActif } from "../middleware/access";
 import { getTalentProfileForUser } from "../lib/talent-context";
 import { getPrestataireCompanyForUser } from "../lib/prestataire-context";
 import { notifyPartenaireCompany } from "../lib/notifications";
@@ -106,7 +107,7 @@ placementsRouter.get(
 );
 
 // Consultation — Talents (recrutement direct).
-placementsRouter.get("/talents", requireAuth, requireRole("TALENT"), async (req: AuthenticatedRequest, res) => {
+placementsRouter.get("/talents", requireAuth, requireRole("TALENT"), requireAccesActif, async (req: AuthenticatedRequest, res) => {
   const profile = await getTalentProfileForUser(req.auth!.userId);
   if (!profile) {
     return res.status(404).json({ error: "Aucun profil rattaché à ce compte" });
@@ -124,6 +125,7 @@ placementsRouter.get(
   "/prestataires",
   requireAuth,
   requireRole("PRESTATAIRE"),
+  requireAccesActif,
   async (req: AuthenticatedRequest, res) => {
     const company = await getPrestataireCompanyForUser(req.auth!.userId);
     if (!company) {

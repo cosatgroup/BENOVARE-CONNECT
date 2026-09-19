@@ -34,13 +34,6 @@ export function creerEntreprise(input: OnboardingInput) {
   });
 }
 
-export function choisirPalier(palierEtoiles: "SILVER" | "GOLD" | "PLATINUM") {
-  return authRequest("/api/prestataires/subscription", {
-    method: "POST",
-    body: JSON.stringify({ palierEtoiles }),
-  });
-}
-
 export interface ProjetBesoin {
   id: string;
   titre: string;

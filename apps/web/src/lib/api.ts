@@ -72,6 +72,12 @@ export interface Me {
   role: "TALENT" | "PRESTATAIRE" | "PARTENAIRE" | "GESTIONNAIRE" | "ADMINISTRATEUR";
   status: "ACTIF" | "SUSPENDU" | "EN_ATTENTE_VALIDATION";
   mfaEnabled: boolean;
+  // §7.4 — 30 jours d'essai à l'inscription pour les comptes Talent,
+  // Prestataire et Partenaire ; null/true pour les comptes internes
+  // (Gestionnaire, Administrateur), qui n'y sont pas soumis.
+  accesActif: boolean;
+  essaiExpireLe: string | null;
+  abonnementActif: boolean;
 }
 
 export function getMe() {

@@ -2,11 +2,12 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
+import { requireAccesActif } from "../middleware/access";
 import { getPartenaireCompanyForUser } from "../lib/partenaire-context";
 
 export const missionsRouter = Router();
 
-missionsRouter.use(requireAuth, requireRole("PARTENAIRE"));
+missionsRouter.use(requireAuth, requireRole("PARTENAIRE"), requireAccesActif);
 
 // §5.5 — Missions en cours et clôturées : suivi des jalons, livrables,
 // messagerie, et examen des demandes de délai/avenant (décision conjointe

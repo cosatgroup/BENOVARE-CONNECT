@@ -2,11 +2,12 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
+import { requireAccesActif } from "../middleware/access";
 import { getPartenaireCompanyForUser } from "../lib/partenaire-context";
 
 export const besoinsRouter = Router();
 
-besoinsRouter.use(requireAuth);
+besoinsRouter.use(requireAuth, requireAccesActif);
 
 const besoinSchema = z.object({
   type: z.enum(["RECRUTEMENT_TALENT", "RECRUTEMENT_PRESTATAIRE", "CONSEIL_AUDIT"]),

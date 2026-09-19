@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
+import { requireAccesActif } from "../middleware/access";
 import { collecterOpportunitesExternes } from "../lib/veille-ingestion";
 import { VEILLE_SOURCES } from "../lib/veille-sources";
 import { verifyAuthToken } from "../lib/jwt";
@@ -77,6 +78,7 @@ veilleRouter.get(
   "/publiees",
   requireAuth,
   requireRole("TALENT"),
+  requireAccesActif,
   async (_req: AuthenticatedRequest, res) => {
     const opportunites = await prisma.opportuniteExterne.findMany({
       where: { statutModeration: "APPROUVEE" },

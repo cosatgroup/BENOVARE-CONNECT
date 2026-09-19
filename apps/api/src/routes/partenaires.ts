@@ -2,11 +2,12 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
+import { requireAccesActif } from "../middleware/access";
 import { getPartenaireCompanyForUser } from "../lib/partenaire-context";
 
 export const partenairesRouter = Router();
 
-partenairesRouter.use(requireAuth, requireRole("PARTENAIRE"));
+partenairesRouter.use(requireAuth, requireRole("PARTENAIRE"), requireAccesActif);
 
 const onboardingSchema = z.object({
   raisonSociale: z.string().min(2),
@@ -53,41 +54,7 @@ partenairesRouter.get("/me", async (req: AuthenticatedRequest, res) => {
   return res.json(company);
 });
 
-const subscriptionSchema = z.object({
-  formulePartenaire: z.enum(["ESSENTIEL", "BUSINESS", "ENTERPRISE"]),
-});
-
-// §5.7 — Formules de service, avec proratisation automatique évoquée dans
-// les specs (non modélisée ici, à ajouter avec la facturation réelle).
-partenairesRouter.post("/subscription", async (req: AuthenticatedRequest, res) => {
-  const parsed = subscriptionSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
-  }
-
-  const company = await getPartenaireCompanyForUser(req.auth!.userId);
-  if (!company) {
-    return res.status(404).json({ error: "Aucune entreprise rattachée à ce compte" });
-  }
-
-  const prochainRenouvellement = new Date();
-  prochainRenouvellement.setMonth(prochainRenouvellement.getMonth() + 1);
-
-  let subscription;
-  if (company.subscriptionId) {
-    subscription = await prisma.subscription.update({
-      where: { id: company.subscriptionId },
-      data: { formulePartenaire: parsed.data.formulePartenaire, status: "ACTIVE" },
-    });
-  } else {
-    subscription = await prisma.subscription.create({
-      data: { formulePartenaire: parsed.data.formulePartenaire, status: "ACTIVE", prochainRenouvellement },
-    });
-    await prisma.partenaireCompany.update({
-      where: { id: company.id },
-      data: { subscriptionId: subscription.id },
-    });
-  }
-
-  return res.json(subscription);
-});
+// §5.7/§7.4 — Les formules Essentiel/Business/Enterprise ne s'activent plus
+// gratuitement ici : elles sont établies au cas par cas par un devis
+// Administrateur, payé (KKiaPay/FedaPay/virement) puis activé par le
+// titulaire du compte via son code de licence (voir /api/devis, /api/abonnement).

@@ -2,11 +2,12 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
+import { requireAccesActif } from "../middleware/access";
 import { getPrestataireCompanyForUser } from "../lib/prestataire-context";
 
 export const prestataireMissionsRouter = Router();
 
-prestataireMissionsRouter.use(requireAuth, requireRole("PRESTATAIRE"));
+prestataireMissionsRouter.use(requireAuth, requireRole("PRESTATAIRE"), requireAccesActif);
 
 async function findMissionForCompany(missionId: string, companyId: string) {
   return prisma.mission.findFirst({

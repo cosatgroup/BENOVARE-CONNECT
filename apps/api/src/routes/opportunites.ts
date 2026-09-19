@@ -2,12 +2,13 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
+import { requireAccesActif } from "../middleware/access";
 import { getTalentProfileForUser, maxEtoilesForPalier } from "../lib/talent-context";
 import { notifyPartenaireCompany } from "../lib/notifications";
 
 export const opportunitesRouter = Router();
 
-opportunitesRouter.use(requireAuth, requireRole("TALENT"));
+opportunitesRouter.use(requireAuth, requireRole("TALENT"), requireAccesActif);
 
 // §3.5 — Catalogue filtré selon le palier d'abonnement, avec deux onglets :
 // avis de recrutement publiés par les Partenaires, et avis de recherche de

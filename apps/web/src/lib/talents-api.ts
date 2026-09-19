@@ -39,13 +39,6 @@ export function creerProfil(input: OnboardingTalentInput) {
   });
 }
 
-export function choisirPalier(palierEtoiles: "SILVER" | "GOLD" | "PLATINUM") {
-  return authRequest("/api/talents/subscription", {
-    method: "POST",
-    body: JSON.stringify({ palierEtoiles }),
-  });
-}
-
 export interface OpportuniteBesoin {
   id: string;
   titre: string;

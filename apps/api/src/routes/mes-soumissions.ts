@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
+import { requireAccesActif } from "../middleware/access";
 import { getPrestataireCompanyForUser } from "../lib/prestataire-context";
 
 export const mesSoumissionsRouter = Router();
 
-mesSoumissionsRouter.use(requireAuth, requireRole("PRESTATAIRE"));
+mesSoumissionsRouter.use(requireAuth, requireRole("PRESTATAIRE"), requireAccesActif);
 
 // §4.5 Suivi — statut de soumission en temps réel.
 mesSoumissionsRouter.get("/", async (req: AuthenticatedRequest, res) => {

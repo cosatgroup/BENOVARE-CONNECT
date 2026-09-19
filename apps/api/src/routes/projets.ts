@@ -2,12 +2,13 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
+import { requireAccesActif } from "../middleware/access";
 import { getPrestataireCompanyForUser, maxEtoilesForPalier } from "../lib/prestataire-context";
 import { notifyPartenaireCompany } from "../lib/notifications";
 
 export const projetsRouter = Router();
 
-projetsRouter.use(requireAuth, requireRole("PRESTATAIRE"));
+projetsRouter.use(requireAuth, requireRole("PRESTATAIRE"), requireAccesActif);
 
 // §4.5 — Catalogue des besoins de recrutement de prestataire publiés par
 // les Partenaires, filtré selon le palier d'abonnement de l'entreprise.

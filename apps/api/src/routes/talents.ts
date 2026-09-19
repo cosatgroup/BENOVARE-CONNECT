@@ -2,11 +2,12 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
+import { requireAccesActif } from "../middleware/access";
 import { getTalentProfileForUser } from "../lib/talent-context";
 
 export const talentsRouter = Router();
 
-talentsRouter.use(requireAuth, requireRole("TALENT"));
+talentsRouter.use(requireAuth, requireRole("TALENT"), requireAccesActif);
 
 const onboardingSchema = z.object({
   nom: z.string().min(1),
@@ -60,38 +61,7 @@ talentsRouter.get("/me", async (req: AuthenticatedRequest, res) => {
   return res.json(profile);
 });
 
-const subscriptionSchema = z.object({ palierEtoiles: z.enum(["SILVER", "GOLD", "PLATINUM"]) });
-
-// §3.3 — Formules Silver/Gold/Platinum, changement à tout moment.
-talentsRouter.post("/subscription", async (req: AuthenticatedRequest, res) => {
-  const parsed = subscriptionSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
-  }
-
-  const profile = await prisma.talentProfile.findUnique({ where: { userId: req.auth!.userId } });
-  if (!profile) {
-    return res.status(404).json({ error: "Aucun profil rattaché à ce compte" });
-  }
-
-  const prochainRenouvellement = new Date();
-  prochainRenouvellement.setMonth(prochainRenouvellement.getMonth() + 1);
-
-  let subscription;
-  if (profile.subscriptionId) {
-    subscription = await prisma.subscription.update({
-      where: { id: profile.subscriptionId },
-      data: { palierEtoiles: parsed.data.palierEtoiles, status: "ACTIVE" },
-    });
-  } else {
-    subscription = await prisma.subscription.create({
-      data: { palierEtoiles: parsed.data.palierEtoiles, status: "ACTIVE", prochainRenouvellement },
-    });
-    await prisma.talentProfile.update({
-      where: { id: profile.id },
-      data: { subscriptionId: subscription.id },
-    });
-  }
-
-  return res.json(subscription);
-});
+// §3.3/§7.4 — Les formules Silver/Gold/Platinum ne s'activent plus
+// gratuitement ici : elles sont établies au cas par cas par un devis
+// Administrateur, payé (KKiaPay/FedaPay/virement) puis activé par le
+// titulaire du compte via son code de licence (voir /api/devis, /api/abonnement).

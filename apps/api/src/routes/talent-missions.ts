@@ -2,11 +2,12 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
+import { requireAccesActif } from "../middleware/access";
 import { getTalentProfileForUser } from "../lib/talent-context";
 
 export const talentMissionsRouter = Router();
 
-talentMissionsRouter.use(requireAuth, requireRole("TALENT"));
+talentMissionsRouter.use(requireAuth, requireRole("TALENT"), requireAccesActif);
 
 async function findMissionForTalent(missionId: string, talentId: string) {
   return prisma.mission.findFirst({

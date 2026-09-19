@@ -2,12 +2,13 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
+import { requireAccesActif } from "../middleware/access";
 import { getPartenaireCompanyForUser } from "../lib/partenaire-context";
 import { notifyPrestataireCompany, notifyUser } from "../lib/notifications";
 
 export const candidaturesRouter = Router();
 
-candidaturesRouter.use(requireAuth, requireRole("PARTENAIRE"));
+candidaturesRouter.use(requireAuth, requireRole("PARTENAIRE"), requireAccesActif);
 
 // §5.4 — Candidatures et sélection. Le premier entretien (technique et
 // administratif) est mené par le Gestionnaire de compte ; le Partenaire ne
