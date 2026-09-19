@@ -3,9 +3,12 @@ databases:
     plan: free
     postgresMajorVersion: "16"
 
-# NOTE: `prisma db push` (au lieu de `migrate deploy`) tant que le schéma
-# bouge vite console par console — pas encore de fichiers de migration
-# versionnés. À revoir vers `prisma migrate` une fois le modèle stabilisé.
+# Migrations versionnées (prisma/migrations). La base existait déjà (créée
+# via `db push` avant l'introduction des migrations) : `migrate resolve
+# --applied` marque la migration de référence comme déjà appliquée sans la
+# rejouer, en échouant silencieusement (`|| true`) les fois suivantes où
+# elle est déjà enregistrée. `migrate deploy` applique ensuite toute
+# nouvelle migration ajoutée au dossier.
 services:
   - type: web
     name: benovare-connect-api
@@ -13,7 +16,7 @@ services:
     plan: free
     rootDir: apps/api
     buildCommand: npm install --include=dev && npx prisma generate && npm run build
-    startCommand: npx prisma db push --skip-generate && npm run start
+    startCommand: (npx prisma migrate resolve --applied 20260101000000_init || true) && npx prisma migrate deploy && npm run start
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
