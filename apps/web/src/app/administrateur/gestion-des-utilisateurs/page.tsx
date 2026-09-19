@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   assignerGestionnaire,
   changerStatut,
+  creerCompteInterne,
   listerGestionnaires,
   listerPartenairesPourAffectation,
   listerUtilisateurs,
@@ -29,8 +30,15 @@ export default function GestionDesUtilisateursPage() {
   const [users, setUsers] = useState<AdminUser[] | null>(null);
   const [gestionnaires, setGestionnaires] = useState<AdminGestionnaire[]>([]);
   const [partenaires, setPartenaires] = useState<AdminPartenaireCompany[] | null>(null);
-  const [tab, setTab] = useState<"COMPTES" | "PORTEFEUILLES">("COMPTES");
+  const [tab, setTab] = useState<"COMPTES" | "PORTEFEUILLES" | "INTERNE">("COMPTES");
   const [pending, setPending] = useState<string | null>(null);
+  const [nom, setNom] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"GESTIONNAIRE" | "ADMINISTRATEUR">("GESTIONNAIRE");
+  const [creationError, setCreationError] = useState<string | null>(null);
+  const [creationSuccess, setCreationSuccess] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   function refresh() {
     listerUtilisateurs().then(setUsers);
@@ -62,12 +70,33 @@ export default function GestionDesUtilisateursPage() {
     }
   }
 
+  async function handleCreerCompteInterne(e: React.FormEvent) {
+    e.preventDefault();
+    setCreationError(null);
+    setCreationSuccess(null);
+    setCreating(true);
+    try {
+      await creerCompteInterne({ email, password, role, nom });
+      setCreationSuccess(
+        `Compte ${role === "GESTIONNAIRE" ? "Gestionnaire" : "Administrateur"} créé pour ${email}. Communiquez-lui le mot de passe de façon sécurisée — la configuration MFA se fera à sa première connexion.`
+      );
+      setNom("");
+      setEmail("");
+      setPassword("");
+      refresh();
+    } catch (err) {
+      setCreationError(err instanceof Error ? err.message : "Une erreur est survenue");
+    } finally {
+      setCreating(false);
+    }
+  }
+
   return (
     <div className="max-w-3xl">
       <h1 className="text-xl font-semibold text-neutre-900">Gestion des utilisateurs</h1>
 
       <div className="mt-4 flex gap-2 border-b border-neutre-200">
-        {(["COMPTES", "PORTEFEUILLES"] as const).map((t) => (
+        {(["COMPTES", "PORTEFEUILLES", "INTERNE"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -75,7 +104,11 @@ export default function GestionDesUtilisateursPage() {
               tab === t ? "border-b-2 border-vert-benovare text-neutre-900" : "text-neutre-600"
             }`}
           >
-            {t === "COMPTES" ? "Tous les comptes" : "Attribution des portefeuilles"}
+            {t === "COMPTES"
+              ? "Tous les comptes"
+              : t === "PORTEFEUILLES"
+                ? "Attribution des portefeuilles"
+                : "Créer un compte interne"}
           </button>
         ))}
       </div>
@@ -154,6 +187,71 @@ export default function GestionDesUtilisateursPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {tab === "INTERNE" && (
+        <form onSubmit={handleCreerCompteInterne} className="mt-4 max-w-sm space-y-4">
+          <p className="text-sm text-neutre-600">
+            Seul point de création des comptes internes (Gestionnaire de compte, Administrateur).
+            La personne finalise elle-même sa configuration MFA à sa première connexion.
+          </p>
+
+          <div>
+            <label className="block text-sm font-medium text-neutre-900">Rôle</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as typeof role)}
+              className="mt-1 w-full rounded-md border border-neutre-200 px-3 py-2 text-sm"
+            >
+              <option value="GESTIONNAIRE">Gestionnaire de compte</option>
+              <option value="ADMINISTRATEUR">Administrateur</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutre-900">Nom</label>
+            <input
+              required
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+              className="mt-1 w-full rounded-md border border-neutre-200 px-3 py-2 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutre-900">E-mail</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 w-full rounded-md border border-neutre-200 px-3 py-2 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutre-900">Mot de passe initial</label>
+            <input
+              type="password"
+              required
+              minLength={10}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-1 w-full rounded-md border border-neutre-200 px-3 py-2 text-sm"
+            />
+          </div>
+
+          {creationError && <p className="text-sm text-orange-fonce">{creationError}</p>}
+          {creationSuccess && <p className="text-sm text-vert-benovare">{creationSuccess}</p>}
+
+          <button
+            type="submit"
+            disabled={creating}
+            className="rounded-md bg-vert-benovare px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {creating ? "Création…" : "Créer le compte"}
+          </button>
+        </form>
       )}
     </div>
   );

@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { createTotpSecret, buildTotpEnrollment, verifyTotpCode } from "../lib/totp";
+import { encryptSecret, decryptSecret } from "../lib/crypto";
 import { signAuthToken, signPendingMfaToken, verifyPendingMfaToken } from "../lib/jwt";
 
 export const authRouter = Router();
@@ -10,13 +11,10 @@ export const authRouter = Router();
 const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(10),
-  // SÉCURITÉ — À FAIRE AVANT TOUT LANCEMENT RÉEL : GESTIONNAIRE et
-  // ADMINISTRATEUR sont des rôles internes qui ne devraient jamais être
-  // auto-inscriptibles. Ouverts ici uniquement le temps de construire et
-  // tester ces consoles faute de mécanisme de provisioning interne
-  // (invitation par un Administrateur, §7.3). Retirer ces deux valeurs de
-  // l'enum dès qu'un flux d'invitation sécurisé existe.
-  role: z.enum(["TALENT", "PRESTATAIRE", "PARTENAIRE", "GESTIONNAIRE", "ADMINISTRATEUR"]),
+  // GESTIONNAIRE et ADMINISTRATEUR sont des rôles internes, jamais
+  // auto-inscriptibles — créés exclusivement par un Administrateur via
+  // POST /api/administrateur/utilisateurs/interne (§7.3).
+  role: z.enum(["TALENT", "PRESTATAIRE", "PARTENAIRE"]),
   phone: z.string().optional(),
 });
 
@@ -41,18 +39,10 @@ authRouter.post("/register", async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
-  // TODO: chiffrer mfaSecret au repos avant un vrai lancement en production.
   const mfaSecret = createTotpSecret();
   const user = await prisma.user.create({
-    data: { email, phone, passwordHash, role, mfaSecret },
+    data: { email, phone, passwordHash, role, mfaSecret: encryptSecret(mfaSecret) },
   });
-
-  if (role === "GESTIONNAIRE") {
-    await prisma.gestionnaireProfile.create({ data: { userId: user.id, nom: email } });
-  }
-  if (role === "ADMINISTRATEUR") {
-    await prisma.adminProfile.create({ data: { userId: user.id, nom: email } });
-  }
 
   const enrollment = await buildTotpEnrollment(email, mfaSecret);
 
@@ -98,7 +88,7 @@ authRouter.post("/login", async (req, res) => {
     if (!user.mfaSecret) {
       return res.status(500).json({ error: "Configuration MFA manquante, contactez le support" });
     }
-    const enrollment = await buildTotpEnrollment(user.email, user.mfaSecret);
+    const enrollment = await buildTotpEnrollment(user.email, decryptSecret(user.mfaSecret));
     return res.json({
       message: "Finalisez la configuration de votre application d'authentification.",
       pendingMfaToken,
@@ -137,7 +127,7 @@ authRouter.post("/verify-mfa", async (req, res) => {
     return res.status(401).json({ error: "Configuration MFA introuvable" });
   }
 
-  const ok = await verifyTotpCode(user.mfaSecret, parsed.data.code);
+  const ok = await verifyTotpCode(decryptSecret(user.mfaSecret), parsed.data.code);
   if (!ok) {
     return res.status(401).json({ error: "Code invalide ou expiré" });
   }

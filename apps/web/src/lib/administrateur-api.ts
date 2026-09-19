@@ -26,6 +26,20 @@ export function listerUtilisateurs() {
   return authRequest<AdminUser[]>("/api/administrateur/utilisateurs");
 }
 
+export interface CreerCompteInterneInput {
+  email: string;
+  password: string;
+  role: "GESTIONNAIRE" | "ADMINISTRATEUR";
+  nom: string;
+}
+
+export function creerCompteInterne(input: CreerCompteInterneInput) {
+  return authRequest<{ id: string; email: string; role: string }>("/api/administrateur/utilisateurs/interne", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
 export function changerStatut(userId: string, status: "ACTIF" | "SUSPENDU") {
   return authRequest(`/api/administrateur/utilisateurs/${userId}/statut`, {
     method: "POST",

@@ -1,11 +1,53 @@
 import { Router } from "express";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth, requireRole, type AuthenticatedRequest } from "../middleware/auth";
+import { createTotpSecret } from "../lib/totp";
+import { encryptSecret } from "../lib/crypto";
 
 export const administrateurRouter = Router();
 
 administrateurRouter.use(requireAuth, requireRole("ADMINISTRATEUR"));
+
+const compteInterneSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(10),
+  role: z.enum(["GESTIONNAIRE", "ADMINISTRATEUR"]),
+  nom: z.string().min(1),
+});
+
+// §7.1/§7.3 — Seul point de création des comptes internes (Gestionnaire de
+// compte, Administrateur). Le mot de passe est défini ici par
+// l'Administrateur et communiqué de façon sécurisée à la personne
+// concernée (hors plateforme) ; elle finalise elle-même sa configuration
+// MFA à sa première connexion (flux de /api/auth/login).
+administrateurRouter.post("/utilisateurs/interne", async (req: AuthenticatedRequest, res) => {
+  const parsed = compteInterneSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  const { email, password, role, nom } = parsed.data;
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    return res.status(409).json({ error: "Un compte existe déjà avec cet e-mail" });
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  const mfaSecret = createTotpSecret();
+  const user = await prisma.user.create({
+    data: { email, passwordHash, role, mfaSecret: encryptSecret(mfaSecret), status: "ACTIF" },
+  });
+
+  if (role === "GESTIONNAIRE") {
+    await prisma.gestionnaireProfile.create({ data: { userId: user.id, nom } });
+  } else {
+    await prisma.adminProfile.create({ data: { userId: user.id, nom } });
+  }
+
+  return res.status(201).json({ id: user.id, email: user.email, role: user.role });
+});
 
 // §7.2 — Tableau de bord global.
 administrateurRouter.get("/dashboard", async (_req: AuthenticatedRequest, res) => {
