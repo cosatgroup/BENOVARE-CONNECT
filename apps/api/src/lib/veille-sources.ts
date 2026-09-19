@@ -19,5 +19,8 @@ export const VEILLE_SOURCES: VeilleSource[] = [
   },
 ];
 
+// Un UA s'auto-déclarant comme robot (ex. "BenovareConnectVeille/1.0")
+// s'est fait bloquer par le WAF de ReliefWeb (réponse HTML au lieu du XML
+// attendu). Un UA de navigateur standard passe sur les deux sources.
 export const VEILLE_USER_AGENT =
-  "Mozilla/5.0 (compatible; BenovareConnectVeille/1.0; +https://connect.benovare.com)";
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
