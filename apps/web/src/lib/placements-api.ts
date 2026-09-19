@@ -19,8 +19,14 @@ export interface CreerPlacementInput {
   titre: string;
   description: string;
   niveauEtoiles: number;
-  entrepriseClienteNom: string;
+  partenaireCompanyId?: string;
+  entrepriseClienteNom?: string;
   categorieTechnique?: string;
+}
+
+export interface PartenaireOption {
+  id: string;
+  raisonSociale: string;
 }
 
 // Gestion — Administrateur / Gestionnaire de compte.
@@ -30,6 +36,10 @@ export function creerPlacement(input: CreerPlacementInput) {
 
 export function listerPlacements() {
   return authRequest<Placement[]>("/api/placements");
+}
+
+export function listerPartenairesPourPlacement() {
+  return authRequest<PartenaireOption[]>("/api/placements/partenaires");
 }
 
 // Consultation — Talents / Prestataires.

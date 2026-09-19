@@ -7,20 +7,44 @@ import { getPrestataireCompanyForUser } from "../lib/prestataire-context";
 
 export const placementsRouter = Router();
 
-// §3.6/§4.6/§7.7 — Offres de placement confiées directement à Benovare par
-// une entreprise hors plateforme, publiées et gérées par l'Administrateur
-// ou le Gestionnaire de compte. Réutilisent le Besoin standard
-// (publieParBenovare: true, sans partenaireCompanyId) — même parcours de
-// candidature, d'entretiens et de pilotage qu'un projet classique.
+// §3.6/§4.6/§7.7 — Offres de placement : Benovare publie et gère lui-même,
+// pour le compte d'un Partenaire déjà inscrit, un besoin de recrutement —
+// l'accompagnement le plus poussé offert aux Partenaires en recherche de
+// ressources compétentes. Un besoin confié par une entreprise non encore
+// inscrite reste possible via entrepriseClienteNom (nom libre) tant
+// qu'aucun compte Partenaire ne lui est associé. Réutilise le Besoin
+// standard (publieParBenovare: true) — même parcours de candidature,
+// d'entretiens et de pilotage qu'un projet classique.
 
-const placementSchema = z.object({
-  type: z.enum(["RECRUTEMENT_TALENT", "RECRUTEMENT_PRESTATAIRE"]),
-  titre: z.string().min(3),
-  description: z.string().min(10),
-  niveauEtoiles: z.number().int().min(1).max(4),
-  entrepriseClienteNom: z.string().min(1),
-  categorieTechnique: z.string().optional(),
-});
+const placementSchema = z
+  .object({
+    type: z.enum(["RECRUTEMENT_TALENT", "RECRUTEMENT_PRESTATAIRE"]),
+    titre: z.string().min(3),
+    description: z.string().min(10),
+    niveauEtoiles: z.number().int().min(1).max(4),
+    partenaireCompanyId: z.string().optional(),
+    entrepriseClienteNom: z.string().optional(),
+    categorieTechnique: z.string().optional(),
+  })
+  .refine((data) => data.partenaireCompanyId || data.entrepriseClienteNom, {
+    message: "Sélectionnez un Partenaire existant ou saisissez le nom de l'entreprise cliente",
+    path: ["entrepriseClienteNom"],
+  });
+
+// Partenaires existants, pour sélection lors de la publication d'une offre
+// de placement en leur nom.
+placementsRouter.get(
+  "/partenaires",
+  requireAuth,
+  requireRole("ADMINISTRATEUR", "GESTIONNAIRE"),
+  async (_req: AuthenticatedRequest, res) => {
+    const partenaires = await prisma.partenaireCompany.findMany({
+      select: { id: true, raisonSociale: true },
+      orderBy: { raisonSociale: "asc" },
+    });
+    return res.json(partenaires);
+  }
+);
 
 // Gestion — Administrateur ou Gestionnaire de compte.
 placementsRouter.post(
@@ -33,8 +57,24 @@ placementsRouter.post(
       return res.status(400).json({ error: parsed.error.flatten() });
     }
 
+    const { partenaireCompanyId, entrepriseClienteNom, ...rest } = parsed.data;
+    let entrepriseClienteNomFinal = entrepriseClienteNom;
+
+    if (partenaireCompanyId) {
+      const company = await prisma.partenaireCompany.findUnique({ where: { id: partenaireCompanyId } });
+      if (!company) {
+        return res.status(404).json({ error: "Entreprise partenaire introuvable" });
+      }
+      entrepriseClienteNomFinal = company.raisonSociale;
+    }
+
     const placement = await prisma.besoin.create({
-      data: { ...parsed.data, publieParBenovare: true },
+      data: {
+        ...rest,
+        partenaireCompanyId: partenaireCompanyId ?? null,
+        entrepriseClienteNom: entrepriseClienteNomFinal,
+        publieParBenovare: true,
+      },
     });
     return res.status(201).json(placement);
   }

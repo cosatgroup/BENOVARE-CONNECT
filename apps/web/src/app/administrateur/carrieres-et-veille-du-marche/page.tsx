@@ -8,7 +8,13 @@ import {
   type CollecteResult,
   type OpportuniteExterne,
 } from "@/lib/veille-api";
-import { creerPlacement, listerPlacements, type Placement } from "@/lib/placements-api";
+import {
+  creerPlacement,
+  listerPartenairesPourPlacement,
+  listerPlacements,
+  type PartenaireOption,
+  type Placement,
+} from "@/lib/placements-api";
 
 const STATUT_LABELS: Record<OpportuniteExterne["statutModeration"], string> = {
   EN_ATTENTE: "À modérer",
@@ -25,12 +31,14 @@ export default function CarrieresEtVeilleDuMarchePage() {
   const [error, setError] = useState<string | null>(null);
 
   const [placements, setPlacements] = useState<Placement[] | null>(null);
+  const [partenaires, setPartenaires] = useState<PartenaireOption[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [placementType, setPlacementType] = useState<"RECRUTEMENT_TALENT" | "RECRUTEMENT_PRESTATAIRE">(
     "RECRUTEMENT_TALENT"
   );
   const [titre, setTitre] = useState("");
   const [description, setDescription] = useState("");
+  const [partenaireCompanyId, setPartenaireCompanyId] = useState("");
   const [entrepriseClienteNom, setEntrepriseClienteNom] = useState("");
   const [niveauEtoiles, setNiveauEtoiles] = useState(2);
   const [creatingPlacement, setCreatingPlacement] = useState(false);
@@ -51,6 +59,7 @@ export default function CarrieresEtVeilleDuMarchePage() {
 
   useEffect(() => {
     refreshPlacements();
+    listerPartenairesPourPlacement().then(setPartenaires);
   }, []);
 
   async function handleCreerPlacement(e: React.FormEvent) {
@@ -58,9 +67,17 @@ export default function CarrieresEtVeilleDuMarchePage() {
     setPlacementError(null);
     setCreatingPlacement(true);
     try {
-      await creerPlacement({ type: placementType, titre, description, niveauEtoiles, entrepriseClienteNom });
+      await creerPlacement({
+        type: placementType,
+        titre,
+        description,
+        niveauEtoiles,
+        partenaireCompanyId: partenaireCompanyId || undefined,
+        entrepriseClienteNom: partenaireCompanyId ? undefined : entrepriseClienteNom,
+      });
       setTitre("");
       setDescription("");
+      setPartenaireCompanyId("");
       setEntrepriseClienteNom("");
       setShowForm(false);
       refreshPlacements();
@@ -135,7 +152,27 @@ export default function CarrieresEtVeilleDuMarchePage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-neutre-900">Entreprise cliente</label>
+                <label className="block text-sm font-medium text-neutre-900">Entreprise Partenaire</label>
+                <select
+                  value={partenaireCompanyId}
+                  onChange={(e) => setPartenaireCompanyId(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-neutre-200 px-3 py-2 text-sm"
+                >
+                  <option value="">— Non inscrite sur la plateforme —</option>
+                  {partenaires.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.raisonSociale}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {!partenaireCompanyId && (
+              <div>
+                <label className="block text-sm font-medium text-neutre-900">
+                  Nom de l&apos;entreprise cliente (hors plateforme)
+                </label>
                 <input
                   required
                   value={entrepriseClienteNom}
@@ -143,7 +180,7 @@ export default function CarrieresEtVeilleDuMarchePage() {
                   className="mt-1 w-full rounded-md border border-neutre-200 px-3 py-2 text-sm"
                 />
               </div>
-            </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-neutre-900">Titre</label>
               <input
