@@ -582,3 +582,28 @@ model AuditLog {
   cible      String?
   createdAt  DateTime @default(now())
 }
+
+// ---------------------------------------------------------------------------
+// Veille des opportunités du marché (§3.6, §4.6, §7.7)
+// Annonces collectées automatiquement sur des sites publics de recrutement
+// à travers l'Afrique, modérées par l'Administrateur avant publication dans
+// l'espace « Veille des opportunités du marché » des consoles Talents et
+// Prestataires.
+// ---------------------------------------------------------------------------
+
+enum StatutModeration {
+  EN_ATTENTE
+  APPROUVEE
+  REJETEE
+}
+
+model OpportuniteExterne {
+  id                String           @id @default(cuid())
+  titre             String
+  description       String
+  url               String           @unique
+  source            String
+  publieLe          DateTime?
+  statutModeration  StatutModeration @default(EN_ATTENTE)
+  collecteeLe       DateTime         @default(now())
+}
