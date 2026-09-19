@@ -71,12 +71,12 @@ veilleRouter.post(
   }
 );
 
-// Consultation par les Talents et Prestataires — uniquement les annonces
-// approuvées, identifiées comme « source externe » (§3.6, §4.6).
+// Consultation par les Talents uniquement — annonces approuvées,
+// identifiées comme « source externe » (§3.6).
 veilleRouter.get(
   "/publiees",
   requireAuth,
-  requireRole("TALENT", "PRESTATAIRE"),
+  requireRole("TALENT"),
   async (_req: AuthenticatedRequest, res) => {
     const opportunites = await prisma.opportuniteExterne.findMany({
       where: { statutModeration: "APPROUVEE" },

@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { listerVeillePubliee, type OpportuniteExterne } from "@/lib/veille-api";
 
-// §3.6 / §4.6 — Annonces collectées automatiquement sur des sites publics
-// à travers l'Afrique, clairement identifiées comme « source externe » ;
-// Benovare n'intervient pas dans leur processus de sélection.
+// §3.6 — Annonces collectées automatiquement sur des sites publics à
+// travers l'Afrique, clairement identifiées comme « source externe » ;
+// Benovare n'intervient pas dans leur processus de sélection. Affiché
+// uniquement dans la console Talents (choix produit).
 export function VeilleDuMarche() {
   const [items, setItems] = useState<OpportuniteExterne[] | null>(null);
 

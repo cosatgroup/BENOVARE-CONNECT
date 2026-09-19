@@ -66,8 +66,8 @@ export default function CarrieresEtVeilleDuMarchePage() {
         <p className="mt-1 text-sm text-neutre-600">
           Sources publiques suivies : NGO Jobs in Africa, BrighterMonday Kenya, Jobberman
           Nigeria. Modération des annonces
-          avant leur publication dans l&apos;espace « Veille des opportunités du marché » des
-          consoles Talents et Prestataires.
+          avant leur publication dans l&apos;espace « Veille des opportunités du marché » de la
+          console Talents.
         </p>
       </div>
 

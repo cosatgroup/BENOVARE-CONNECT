@@ -1,5 +1,3 @@
-import { VeilleDuMarche } from "@/components/carrieres/VeilleDuMarche";
-
 export default function CarrieresPrestatairePage() {
   return (
     <div className="max-w-3xl space-y-8">
@@ -14,8 +12,6 @@ export default function CarrieresPrestatairePage() {
           venir.
         </p>
       </section>
-
-      <VeilleDuMarche />
     </div>
   );
 }
