@@ -27,7 +27,14 @@ export async function collecterOpportunitesExternes(): Promise<CollecteResult[]>
 
   for (const source of VEILLE_SOURCES) {
     try {
-      const feed = await parser.parseURL(source.url);
+      const response = await fetch(source.url, { headers: { "User-Agent": VEILLE_USER_AGENT } });
+      const body = await response.text();
+      if (!response.ok || !body.trim().startsWith("<")) {
+        throw new Error(
+          `Réponse inattendue (HTTP ${response.status}, content-type ${response.headers.get("content-type")}) : ${body.slice(0, 200)}`
+        );
+      }
+      const feed = await parser.parseString(body);
       let nouvelles = 0;
 
       for (const item of feed.items) {
