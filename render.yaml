@@ -36,6 +36,11 @@ services:
       # Cron Jobs Render sur le plan gratuit.
       - key: VEILLE_CRON_SECRET
         generateValue: true
+      # Protège l'opération ponctuelle POST /api/maintenance/reencrypt-secrets
+      # (rechiffrement des mfaSecret créés avant l'introduction du
+      # chiffrement au repos). Peut être retiré une fois l'opération faite.
+      - key: MAINTENANCE_SECRET
+        generateValue: true
       - key: WEB_ORIGIN
         sync: false
       - key: NODE_ENV
