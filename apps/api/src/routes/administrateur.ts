@@ -178,3 +178,66 @@ administrateurRouter.get("/merite/candidats", async (_req: AuthenticatedRequest,
   ]);
   return res.json({ talents, prestataires });
 });
+
+// §7.5 — Catalogue et taxonomie : référentiels partagés (domaines
+// d'expertise des Talents, catégories techniques des besoins) maintenus par
+// l'Administrateur pour harmoniser les classifications plutôt que de
+// laisser des champs libres non contrôlés.
+const nomSchema = z.object({ nom: z.string().min(1) });
+
+administrateurRouter.get("/catalogue/domaines-expertise", async (_req: AuthenticatedRequest, res) => {
+  const domaines = await prisma.domaineExpertise.findMany({
+    include: { _count: { select: { talents: true } } },
+    orderBy: { nom: "asc" },
+  });
+  return res.json(domaines);
+});
+
+administrateurRouter.post("/catalogue/domaines-expertise", async (req: AuthenticatedRequest, res) => {
+  const parsed = nomSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  const domaine = await prisma.domaineExpertise.create({ data: { nom: parsed.data.nom } }).catch(() => null);
+  if (!domaine) {
+    return res.status(409).json({ error: "Ce domaine d'expertise existe déjà" });
+  }
+  return res.status(201).json(domaine);
+});
+
+administrateurRouter.delete("/catalogue/domaines-expertise/:id", async (req: AuthenticatedRequest, res) => {
+  const domaine = await prisma.domaineExpertise.findUnique({
+    where: { id: String(req.params.id) },
+    include: { _count: { select: { talents: true } } },
+  });
+  if (!domaine) {
+    return res.status(404).json({ error: "Domaine introuvable" });
+  }
+  if (domaine._count.talents > 0) {
+    return res.status(409).json({ error: "Ce domaine est utilisé par des Talents et ne peut pas être supprimé" });
+  }
+  await prisma.domaineExpertise.delete({ where: { id: domaine.id } });
+  return res.status(204).send();
+});
+
+administrateurRouter.get("/catalogue/categories-techniques", async (_req: AuthenticatedRequest, res) => {
+  const categories = await prisma.categorieTechnique.findMany({ orderBy: { nom: "asc" } });
+  return res.json(categories);
+});
+
+administrateurRouter.post("/catalogue/categories-techniques", async (req: AuthenticatedRequest, res) => {
+  const parsed = nomSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  const categorie = await prisma.categorieTechnique.create({ data: { nom: parsed.data.nom } }).catch(() => null);
+  if (!categorie) {
+    return res.status(409).json({ error: "Cette catégorie technique existe déjà" });
+  }
+  return res.status(201).json(categorie);
+});
+
+administrateurRouter.delete("/catalogue/categories-techniques/:id", async (req: AuthenticatedRequest, res) => {
+  await prisma.categorieTechnique.delete({ where: { id: String(req.params.id) } }).catch(() => null);
+  return res.status(204).send();
+});

@@ -84,7 +84,7 @@ export const consoles: Record<Role, ConsoleConfig> = {
       { label: "Gestion des utilisateurs", href: "/administrateur/gestion-des-utilisateurs" },
       { label: "Abonnements et tarification", href: "/administrateur/abonnements-et-tarification" },
       { label: "Mérite et Profil Unicorn", href: "/administrateur/merite-et-profil-unicorn" },
-      { label: "Catalogue et taxonomie" },
+      { label: "Catalogue et taxonomie", href: "/administrateur/catalogue-et-taxonomie" },
       { label: "Carrières et veille du marché", href: "/administrateur/carrieres-et-veille-du-marche" },
       { label: "Modération et conformité" },
       { label: "Statistiques stratégiques" },

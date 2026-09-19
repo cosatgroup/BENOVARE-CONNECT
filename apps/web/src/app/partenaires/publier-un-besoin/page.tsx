@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEntreprise } from "@/components/partenaires/useEntreprise";
 import { OnboardingEntreprise } from "@/components/partenaires/OnboardingEntreprise";
 import { publierBesoin, type NiveauAccompagnement, type TypeBesoin } from "@/lib/partenaires-api";
+import { listerCategoriesTechniques, type CatalogueEntry } from "@/lib/catalogue-api";
 
 const TYPES: { value: TypeBesoin; label: string; description: string }[] = [
   {
@@ -58,6 +59,11 @@ export default function PublierUnBesoinPage() {
   );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [categoriesSuggestions, setCategoriesSuggestions] = useState<CatalogueEntry[]>([]);
+
+  useEffect(() => {
+    listerCategoriesTechniques().then(setCategoriesSuggestions).catch(() => {});
+  }, []);
 
   if (loadingCompany) return null;
   if (needsOnboarding) return <OnboardingEntreprise onCreated={refetch} />;
@@ -153,8 +159,14 @@ export default function PublierUnBesoinPage() {
             <input
               value={categorieTechnique}
               onChange={(e) => setCategorieTechnique(e.target.value)}
+              list="categories-techniques"
               className="mt-1 w-full rounded-md border border-neutre-200 px-3 py-2 text-sm"
             />
+            <datalist id="categories-techniques">
+              {categoriesSuggestions.map((c) => (
+                <option key={c.id} value={c.nom} />
+              ))}
+            </datalist>
           </div>
         </div>
 

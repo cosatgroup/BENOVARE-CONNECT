@@ -24,6 +24,7 @@ import { placementsRouter } from "./routes/placements";
 import { notificationsRouter } from "./routes/notifications";
 import { devisRouter } from "./routes/devis";
 import { abonnementRouter } from "./routes/abonnement";
+import { catalogueRouter } from "./routes/catalogue";
 import { handleFedapayWebhook, handleKkiapayWebhook } from "./routes/webhooks";
 
 const app = express();
@@ -81,6 +82,7 @@ app.use("/api/placements", placementsRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/devis", devisRouter);
 app.use("/api/abonnement", abonnementRouter);
+app.use("/api/catalogue", catalogueRouter);
 
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 app.listen(port, () => {

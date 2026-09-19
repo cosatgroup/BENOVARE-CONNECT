@@ -1,0 +1,11 @@
+Accès BENOVARE CONNECT
+
+Password Compte FadaPay :  ^q^f<k+>eyv/jpgç3U_tqHz8K+MJ.g@
+
+
+Console		Email					Mot de passe		Clé MFA manuelle
+Talents		demo.talent@benovare.com		DemoBenovare2026!	6KTUCYIGQYTAKXD2E27AXHUMXFZXS4ZA
+Prestataires	demo.prestataire@benovare.com		DemoBenovare2026!	O5PWBF2R7EYLLWHCAJVIF5KAARCRFGTJ
+Partenaires	demo.partenaire@benovare.com		DemoBenovare2026!	53MRAYBNTRIOPSJ2QN2XJSIGC3KKHD6Z
+Gestionnaire	demo.gestionnaire@benovare.com		DemoBenovare2026!	EYXCMTGJTNNDZU3CQ7Z64BNSLB4IJFTS
+Administrateur	demo.administrateur@benovare.com	DemoBenovare2026!	EP7FVYBYIIRTC4IVMG34HECKCD2KPVKG

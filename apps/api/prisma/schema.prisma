@@ -178,6 +178,14 @@ model DomaineExpertise {
   talents  TalentProfile[]
 }
 
+// §7.5 — Catalogue et taxonomie : liste de référence des catégories
+// techniques proposées lors de la publication d'un besoin (Partenaire), afin
+// d'harmoniser la classification plutôt que de laisser un champ libre.
+model CategorieTechnique {
+  id  String @id @default(cuid())
+  nom String @unique
+}
+
 // ---------------------------------------------------------------------------
 // Console Prestataires (personnes morales, multi-utilisateurs)
 // ---------------------------------------------------------------------------

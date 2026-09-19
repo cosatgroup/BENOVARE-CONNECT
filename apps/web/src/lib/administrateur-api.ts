@@ -93,3 +93,44 @@ export function definirMerite(
     body: JSON.stringify(data),
   });
 }
+
+export interface DomaineExpertiseAdmin {
+  id: string;
+  nom: string;
+  _count: { talents: number };
+}
+
+export interface CategorieTechniqueAdmin {
+  id: string;
+  nom: string;
+}
+
+export function listerDomainesExpertise() {
+  return authRequest<DomaineExpertiseAdmin[]>("/api/administrateur/catalogue/domaines-expertise");
+}
+
+export function creerDomaineExpertise(nom: string) {
+  return authRequest<DomaineExpertiseAdmin>("/api/administrateur/catalogue/domaines-expertise", {
+    method: "POST",
+    body: JSON.stringify({ nom }),
+  });
+}
+
+export function supprimerDomaineExpertise(id: string) {
+  return authRequest(`/api/administrateur/catalogue/domaines-expertise/${id}`, { method: "DELETE" });
+}
+
+export function listerCategoriesTechniques() {
+  return authRequest<CategorieTechniqueAdmin[]>("/api/administrateur/catalogue/categories-techniques");
+}
+
+export function creerCategorieTechnique(nom: string) {
+  return authRequest<CategorieTechniqueAdmin>("/api/administrateur/catalogue/categories-techniques", {
+    method: "POST",
+    body: JSON.stringify({ nom }),
+  });
+}
+
+export function supprimerCategorieTechnique(id: string) {
+  return authRequest(`/api/administrateur/catalogue/categories-techniques/${id}`, { method: "DELETE" });
+}
