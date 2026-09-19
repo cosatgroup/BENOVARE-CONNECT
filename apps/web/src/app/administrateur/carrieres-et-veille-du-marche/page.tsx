@@ -64,7 +64,7 @@ export default function CarrieresEtVeilleDuMarchePage() {
       <div>
         <h1 className="text-xl font-semibold text-neutre-900">Carrières et veille du marché</h1>
         <p className="mt-1 text-sm text-neutre-600">
-          Sources publiques suivies : ReliefWeb Jobs, NGO Jobs in Africa. Modération des annonces
+          Source publique suivie : NGO Jobs in Africa. Modération des annonces
           avant leur publication dans l&apos;espace « Veille des opportunités du marché » des
           consoles Talents et Prestataires.
         </p>
